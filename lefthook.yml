@@ -1,0 +1,20 @@
+pre-commit:
+  parallel: true
+  commands:
+    go-lint:
+      glob: "*.go"
+      run: golangci-lint run {staged_files}
+    go-test:
+      glob: "*.go"
+      run: go test ./...
+    frontend-lint:
+      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      run: cd frontend && npm run lint
+    commitlint:
+      run: echo "{1}" | npx commitlint
+
+commit-msg:
+  commands:
+    commitlint:
+      run: npx commitlint --edit
+
