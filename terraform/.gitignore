@@ -1,0 +1,60 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Variable files with sensitive data
+*.auto.tfvars
+terraform.tfvars
+!terraform.tfvars.example
+
+# Backend configuration files
+backend-*.hcl
+!backend-*.hcl.example
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Credentials
+*.json
+*.pem
+*.key
+credentials/
+service-accounts/
+
+# Local environment files
+.env
+.env.local
+
+# Terraform plan files
+*.tfplan
+plan.out
+
+# Python cache (for any helper scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Log files
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
