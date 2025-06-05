@@ -1,0 +1,7 @@
+# Example terraform.tfvars file for development environment
+# Copy this file to terraform.tfvars and update with your values
+
+project_id  = "my-project-dev"
+region      = "us-central1"
+team_name   = "platform-dev"
+alert_email = "dev-alerts@example.com"
