@@ -154,12 +154,6 @@ module "storage" {
   name_prefix   = local.name_prefix
   common_labels = local.common_labels
   
-  # Storage configuration
-  storage_config = var.storage_config
-  
-  # Service account for storage access
-  storage_admin_email = module.iam.storage_admin_email
-  
   depends_on = [module.iam]
 }
 
