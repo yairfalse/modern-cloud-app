@@ -180,22 +180,3 @@ module "pubsub" {
   
   depends_on = [module.iam]
 }
-
-# Monitoring module
-module "monitoring" {
-  source = "./modules/monitoring"
-  
-  project_id    = var.project_id
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  # Resources to monitor
-  gke_cluster_name = module.gke.cluster_name
-  database_instance_name = module.cloudsql.instance_name
-  
-  # Notification configuration
-  notification_config = var.monitoring_config
-  
-  depends_on = [module.gke, module.cloudsql]
-}
