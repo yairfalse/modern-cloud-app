@@ -94,16 +94,6 @@ output "service_accounts" {
   }
 }
 
-# Monitoring outputs
-output "monitoring_workspace_id" {
-  description = "The ID of the monitoring workspace"
-  value       = module.monitoring.workspace_id
-}
-
-output "alert_policy_ids" {
-  description = "Map of alert policy names to their IDs"
-  value       = module.monitoring.alert_policy_ids
-}
 
 # Connection information for applications
 output "app_config" {

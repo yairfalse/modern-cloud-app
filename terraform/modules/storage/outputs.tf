@@ -10,11 +10,6 @@ output "media_bucket_url" {
   value       = google_storage_bucket.media.url
 }
 
-output "media_bucket_self_link" {
-  description = "The self link of the media storage bucket"
-  value       = google_storage_bucket.media.self_link
-}
-
 output "backups_bucket_name" {
   description = "The name of the backups storage bucket"
   value       = google_storage_bucket.backups.name
@@ -35,14 +30,9 @@ output "static_assets_bucket_url" {
   value       = google_storage_bucket.static_assets.url
 }
 
-output "static_cdn_backend_name" {
-  description = "The name of the CDN backend bucket"
-  value       = google_compute_backend_bucket.static_cdn.name
-}
-
-output "static_cdn_self_link" {
-  description = "The self link of the CDN backend bucket"
-  value       = google_compute_backend_bucket.static_cdn.self_link
+output "storage_service_account_email" {
+  description = "The email of the storage service account"
+  value       = google_service_account.storage_admin.email
 }
 
 output "bucket_names" {

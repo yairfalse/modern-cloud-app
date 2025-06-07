@@ -54,7 +54,7 @@ resource "google_project_iam_member" "app_roles" {
 
 # Storage Admin Service Account
 resource "google_service_account" "storage_admin" {
-  account_id   = "${var.name_prefix}-storage-admin-sa"
+  account_id = "${substr(var.name_prefix, 0, 10)}-storage-sa"
   display_name = "Storage Admin Service Account for ${var.environment}"
   description  = "Service account for managing storage buckets and objects"
   
