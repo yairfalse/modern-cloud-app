@@ -149,7 +149,6 @@ module "storage" {
   
   project_id    = var.project_id
   region        = var.region
-  environment   = local.environment
   name_prefix   = local.name_prefix
   common_labels = local.common_labels
   
