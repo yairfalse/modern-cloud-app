@@ -80,7 +80,6 @@ module "networking" {
   region        = var.region
   environment   = local.environment
   name_prefix   = local.name_prefix
-  common_labels = local.common_labels
   
   # Network configuration
   cidr_ranges = var.cidr_ranges

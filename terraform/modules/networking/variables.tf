@@ -20,11 +20,6 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "common_labels" {
-  description = "Common labels to apply to resources"
-  type        = map(string)
-}
-
 variable "cidr_ranges" {
   description = "CIDR ranges for VPC subnets"
   type = object({

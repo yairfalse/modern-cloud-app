@@ -1,5 +1,16 @@
 # IAM module for ModernBlog - Service accounts and roles
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # GKE Service Account
 resource "google_service_account" "gke" {
   account_id   = "${var.name_prefix}-gke-sa"

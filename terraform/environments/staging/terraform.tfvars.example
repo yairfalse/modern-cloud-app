@@ -1,7 +1,0 @@
-# Example terraform.tfvars file for staging environment
-# Copy this file to terraform.tfvars and update with your values
-
-project_id  = "my-project-staging"
-region      = "us-central1"
-team_name   = "platform-staging"
-alert_email = "staging-alerts@example.com"

@@ -1,6 +1,0 @@
-# Backend configuration for development environment
-# Copy this file to backend-dev.hcl and update with your values
-# Use: terraform init -backend-config=backend-dev.hcl
-
-bucket = "my-terraform-state-dev"
-prefix = "modernblog/dev"

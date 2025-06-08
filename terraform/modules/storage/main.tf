@@ -1,5 +1,16 @@
 # Storage module for ultra-budget configuration
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Media storage bucket for blog images
 resource "google_storage_bucket" "media" {
   name          = "${var.name_prefix}-media-${var.project_id}"
