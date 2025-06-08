@@ -1,6 +1,21 @@
 # GKE Cluster module for ModernBlog
 # Creates GKE cluster with Cilium CNI (Dataplane V2) enabled
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
+    }
+  }
+}
+
 # GKE Cluster
 resource "google_container_cluster" "primary" {
   name     = "${var.name_prefix}-gke"

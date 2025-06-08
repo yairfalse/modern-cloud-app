@@ -1,5 +1,16 @@
 # Pub/Sub module for ModernBlog
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Create Pub/Sub topics
 resource "google_pubsub_topic" "topics" {
   for_each = { for topic in var.topics : topic.name => topic }

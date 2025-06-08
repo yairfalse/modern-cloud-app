@@ -1,6 +1,17 @@
 # VPC Networking module for ModernBlog
 # Creates VPC, subnets, firewall rules, and network configurations
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # VPC Network
 resource "google_compute_network" "vpc" {
   name                            = "${var.name_prefix}-vpc"
