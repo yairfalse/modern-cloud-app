@@ -39,23 +39,6 @@ database_config = {
   high_availability      = false
 }
 
-# Storage configuration
-storage_config = {
-  storage_class      = "STANDARD"
-  versioning_enabled = true
-  lifecycle_rules = [
-    {
-      age    = 30
-      action = "SetStorageClass:NEARLINE"
-    },
-    {
-      age    = 90
-      action = "SetStorageClass:COLDLINE"
-    }
-  ]
-  cors_origins = ["*"]
-}
-
 # Pub/Sub topics
 pubsub_topics = [
   {
