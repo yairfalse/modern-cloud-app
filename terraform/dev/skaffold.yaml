@@ -1,0 +1,272 @@
+# Skaffold configuration for ModernBlog development workflow
+# Enables fast, continuous development with hot reloading
+
+apiVersion: skaffold/v4beta9
+kind: Config
+metadata:
+  name: modernblog-dev
+
+# Build configuration
+build:
+  # Use local Docker daemon (works with Kind)
+  local:
+    # Push to local registry for Kind cluster
+    push: true
+    # Use Docker buildkit for faster builds
+    useBuildkit: true
+    # Try importing missing images
+    tryImportMissing: true
+  
+  # Build artifacts
+  artifacts:
+    # API Server
+    - image: modernblog-api
+      context: .
+      docker:
+        dockerfile: Dockerfile.api
+        buildArgs:
+          GO_VERSION: "1.21"
+        cacheFrom:
+          - modernblog-api:latest
+      sync:
+        manual:
+          - src: "**/*.go"
+            dest: /app
+            strip: ""
+          - src: "go.mod"
+            dest: /app
+          - src: "go.sum"
+            dest: /app
+    
+    # Web Frontend
+    - image: modernblog-web
+      context: ./web
+      docker:
+        dockerfile: Dockerfile
+        buildArgs:
+          NODE_VERSION: "20"
+        cacheFrom:
+          - modernblog-web:latest
+      sync:
+        manual:
+          - src: "src/**/*"
+            dest: /app/src
+          - src: "public/**/*"
+            dest: /app/public
+          - src: "package.json"
+            dest: /app
+          - src: "package-lock.json"
+            dest: /app
+
+  # Image tagging strategy
+  tagPolicy:
+    gitCommit:
+      variant: AbbrevCommitSha
+
+# Test configuration
+test:
+  - image: modernblog-api
+    structureTests:
+      - ./test/structure-test-api.yaml
+  - image: modernblog-web
+    structureTests:
+      - ./test/structure-test-web.yaml
+
+# Deployment configuration
+manifests:
+  # Use Kustomize for manifest management
+  kustomize:
+    paths:
+      - k8s/overlays/development
+
+# Port forwarding for local access
+portForward:
+  # API Server
+  - resourceType: service
+    resourceName: modernblog-api
+    namespace: modernblog-dev
+    port: 8080
+    localPort: 8080
+  
+  # Web Frontend
+  - resourceType: service
+    resourceName: modernblog-web
+    namespace: modernblog-dev
+    port: 3000
+    localPort: 3000
+  
+  # Database (for debugging)
+  - resourceType: service
+    resourceName: postgres
+    namespace: modernblog-dev
+    port: 5432
+    localPort: 5433
+  
+  # Redis (for debugging)
+  - resourceType: service
+    resourceName: redis
+    namespace: modernblog-dev
+    port: 6379
+    localPort: 6380
+
+# Development profiles
+profiles:
+  # Development profile (default)
+  - name: development
+    activation:
+      - command: dev
+    build:
+      local:
+        push: false
+      artifacts:
+        - image: modernblog-api
+          sync:
+            infer:
+              - "**/*.go"
+              - "go.mod"
+              - "go.sum"
+        - image: modernblog-web
+          sync:
+            infer:
+              - "src/**/*"
+              - "public/**/*"
+              - "package.json"
+    deploy:
+      kubectl: {}
+    portForward:
+      - resourceType: service
+        resourceName: modernblog-api
+        port: 8080
+        localPort: 8080
+      - resourceType: service
+        resourceName: modernblog-web
+        port: 3000
+        localPort: 3000
+
+  # Staging profile
+  - name: staging
+    manifests:
+      kustomize:
+        paths:
+          - k8s/overlays/staging
+    build:
+      local:
+        push: true
+      tagPolicy:
+        gitCommit:
+          variant: CommitSha
+    deploy:
+      kubectl:
+        flags:
+          global: ["--context=staging-cluster"]
+
+  # Production profile
+  - name: production
+    manifests:
+      kustomize:
+        paths:
+          - k8s/overlays/production
+    build:
+      cluster:
+        namespace: kube-system
+        dockerConfig:
+          secretName: docker-config
+      tagPolicy:
+        gitCommit:
+          variant: CommitSha
+    deploy:
+      kubectl:
+        flags:
+          global: ["--context=production-cluster"]
+
+  # Debug profile with additional debugging tools
+  - name: debug
+    activation:
+      - command: debug
+    patches:
+      - op: add
+        path: /build/artifacts/0/docker/buildArgs/CGO_ENABLED
+        value: "1"
+      - op: add
+        path: /build/artifacts/0/docker/buildArgs/GCFLAGS
+        value: "all=-N -l"
+    portForward:
+      - resourceType: service
+        resourceName: modernblog-api
+        port: 8080
+        localPort: 8080
+      - resourceType: service
+        resourceName: modernblog-api
+        port: 2345  # Delve debugger port
+        localPort: 2345
+
+# File watching configuration
+deploy:
+  kubectl:
+    defaultNamespace: modernblog-dev
+    flags:
+      global: ["--context=kind-modernblog-dev"]
+
+# Custom hooks for development workflow
+hooks:
+  before:
+    - host:
+        command: ["echo", "Starting ModernBlog development..."]
+  
+  after:
+    - host:
+        command: ["echo", "ModernBlog deployment complete!"]
+        os: [darwin, linux]
+
+# Resource requirements for development
+requires:
+  - configs: ["modernblog-dev"]
+  - activeProfiles: [development]
+
+# Custom commands
+customActions:
+  # Database migration
+  - name: migrate
+    executionMode:
+      kubernetesCluster: {}
+    containers:
+      - name: migrate
+        image: modernblog-api
+        command: ["/app/migrate"]
+        args: ["up"]
+
+  # Seed database with test data
+  - name: seed
+    executionMode:
+      kubernetesCluster: {}
+    containers:
+      - name: seed
+        image: modernblog-api
+        command: ["/app/seed"]
+        args: ["--env=development"]
+
+  # Run tests in cluster
+  - name: test
+    executionMode:
+      kubernetesCluster: {}
+    containers:
+      - name: test
+        image: modernblog-api
+        command: ["go"]
+        args: ["test", "./..."]
+
+# Verify configuration
+verify:
+  - name: api-health
+    container:
+      name: api-health-check
+      image: curlimages/curl:latest
+      command: ["/bin/sh"]
+      args: ["-c", "curl -f http://modernblog-api:8080/health || exit 1"]
+  
+  - name: web-health
+    container:
+      name: web-health-check
+      image: curlimages/curl:latest
+      command: ["/bin/sh"]
+      args: ["-c", "curl -f http://modernblog-web:3000 || exit 1"]
