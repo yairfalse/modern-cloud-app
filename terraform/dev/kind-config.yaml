@@ -1,0 +1,179 @@
+# Kind cluster configuration for ModernBlog development
+# Optimized for local development with ingress and port forwarding
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: modernblog-dev
+
+# Kubernetes version
+# Using stable version for reliability
+kubernetesVersion: v1.29.0
+
+# Networking configuration
+networking:
+  # API server port for kubectl access
+  apiServerPort: 6443
+  
+  # Pod subnet (default)
+  podSubnet: "10.244.0.0/16"
+  
+  # Service subnet (default)
+  serviceSubnet: "10.96.0.0/12"
+  
+  # Disable default CNI, we'll install Calico if needed
+  disableDefaultCNI: false
+  
+  # KubeProxy mode (iptables is more stable for development)
+  kubeProxyMode: "iptables"
+
+# Node configuration
+nodes:
+  # Control plane node
+  - role: control-plane
+    image: kindest/node:v1.29.0
+    
+    # Extra mounts for development
+    extraMounts:
+      # Mount local docker socket for building images
+      - hostPath: /var/run/docker.sock
+        containerPath: /var/run/docker.sock
+        readOnly: false
+        selinuxRelabel: false
+        propagation: None
+      
+      # Mount local project directory
+      - hostPath: /Users/yey/personal/modern-cloud-app
+        containerPath: /workspace
+        readOnly: false
+        selinuxRelabel: false
+        propagation: HostToContainer
+    
+    # Port mappings for ingress
+    extraPortMappings:
+      # HTTP ingress
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+        listenAddress: "0.0.0.0"
+      
+      # HTTPS ingress
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+        listenAddress: "0.0.0.0"
+      
+      # API server direct access
+      - containerPort: 8080
+        hostPort: 8080
+        protocol: TCP
+        listenAddress: "127.0.0.1"
+      
+      # Database access (for debugging)
+      - containerPort: 5432
+        hostPort: 5432
+        protocol: TCP
+        listenAddress: "127.0.0.1"
+      
+      # Redis access (for debugging)
+      - containerPort: 6379
+        hostPort: 6379
+        protocol: TCP
+        listenAddress: "127.0.0.1"
+      
+      # Metrics server
+      - containerPort: 10250
+        hostPort: 10250
+        protocol: TCP
+        listenAddress: "127.0.0.1"
+    
+    # Kubernetes control plane configuration
+    kubeadmConfigPatchesJSON6902:
+      # Increase API server verbosity for development
+      - group: kubeadm.k8s.io
+        version: v1beta3
+        kind: ClusterConfiguration
+        patch: |
+          - op: add
+            path: /apiServer/extraArgs/v
+            value: "2"
+          - op: add
+            path: /apiServer/extraArgs/audit-log-maxage
+            value: "30"
+          - op: add
+            path: /apiServer/extraArgs/audit-log-maxbackup
+            value: "3"
+          - op: add
+            path: /apiServer/extraArgs/audit-log-maxsize
+            value: "100"
+      
+      # Configure kubelet for development
+      - group: kubeadm.k8s.io
+        version: v1beta3
+        kind: KubeletConfiguration
+        patch: |
+          - op: add
+            path: /maxPods
+            value: 250
+          - op: add
+            path: /evictionHard/memory.available
+            value: "100Mi"
+          - op: add
+            path: /evictionHard/nodefs.available
+            value: "5%"
+
+  # Worker nodes for more realistic multi-node setup
+  - role: worker
+    image: kindest/node:v1.29.0
+    
+    # Extra mounts for development
+    extraMounts:
+      # Mount local docker socket
+      - hostPath: /var/run/docker.sock
+        containerPath: /var/run/docker.sock
+        readOnly: false
+        selinuxRelabel: false
+        propagation: None
+      
+      # Mount local project directory
+      - hostPath: /Users/yey/personal/modern-cloud-app
+        containerPath: /workspace
+        readOnly: false
+        selinuxRelabel: false
+        propagation: HostToContainer
+    
+    # Labels for scheduling
+    labels:
+      node-type: worker
+      workload: application
+
+# Feature gates for development features
+featureGates:
+  # Enable useful features for development
+  "EphemeralContainers": true
+  "PodSecurity": true
+  "ServerSideApply": true
+
+# Runtime configuration
+runtimeConfig:
+  # Enable useful APIs
+  "api/all": "true"
+
+# Container runtime configuration
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+      endpoint = ["http://localhost:5000"]
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."kind-registry:5000"]
+      endpoint = ["http://kind-registry:5000"]
+
+# Additional options for development
+kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  - |
+    kind: KubeletConfiguration
+    serverTLSBootstrap: true
+    failSwapOn: false
