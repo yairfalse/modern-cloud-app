@@ -1,14 +1,12 @@
+# Minimal Kind configuration for local development
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-name: modernblog-cluster
-
 nodes:
-  # Single node cluster for simplicity
-  - role: control-plane
-    extraPortMappings:
-      - containerPort: 80
-        hostPort: 8080
-        protocol: TCP
-      - containerPort: 443
-        hostPort: 8443
-        protocol: TCP
+- role: control-plane
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
