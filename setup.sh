@@ -8,36 +8,36 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}🚀 ModernBlog Setup - Simple & Fast${NC}"
+echo -e "${GREEN}ModernBlog Setup - Simple & Fast${NC}"
 echo "==============================================="
 
 # Check if we're in the right directory
 if [[ ! -f "setup.sh" ]]; then
-    echo -e "${RED}❌ Please run this script from the project root directory${NC}"
+    echo -e "${RED}ERROR: Please run this script from the project root directory${NC}"
     exit 1
 fi
 
 # Install essential tools
-echo -e "${YELLOW}📦 Installing essential tools...${NC}"
+echo -e "${YELLOW}Installing essential tools...${NC}"
 ./scripts/install-tools.sh
 
 # Setup local Kubernetes cluster
-echo -e "${YELLOW}☸️ Setting up Kind cluster...${NC}"
+echo -e "${YELLOW}Setting up Kind cluster...${NC}"
 ./scripts/setup-local-k8s.sh
 
 # Basic validation
-echo -e "${YELLOW}✅ Running basic validation...${NC}"
+echo -e "${YELLOW}Running basic validation...${NC}"
 if ! kubectl cluster-info &>/dev/null; then
-    echo -e "${RED}❌ Kubernetes cluster not accessible${NC}"
+    echo -e "${RED}ERROR: Kubernetes cluster not accessible${NC}"
     exit 1
 fi
 
 if ! docker info &>/dev/null; then
-    echo -e "${RED}❌ Docker not running${NC}"
+    echo -e "${RED}ERROR: Docker not running${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}🎉 Setup complete!${NC}"
+echo -e "${GREEN}Setup complete!${NC}"
 echo ""
 echo "Next steps:"
 echo "  1. cd to frontend/ or backend/ directory"

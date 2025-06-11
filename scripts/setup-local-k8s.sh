@@ -14,17 +14,17 @@ echo -e "${YELLOW}Setting up Kind cluster...${NC}"
 
 # Check prerequisites
 if ! docker info &>/dev/null; then
-    echo -e "${RED}❌ Docker not running${NC}"
+    echo -e "${RED}ERROR: Docker not running${NC}"
     exit 1
 fi
 
 if ! command -v kind &>/dev/null; then
-    echo -e "${RED}❌ Kind not installed${NC}"
+    echo -e "${RED}ERROR: Kind not installed${NC}"
     exit 1
 fi
 
 if ! command -v kubectl &>/dev/null; then
-    echo -e "${RED}❌ kubectl not installed${NC}"
+    echo -e "${RED}ERROR: kubectl not installed${NC}"
     exit 1
 fi
 
@@ -32,7 +32,7 @@ fi
 if kind get clusters 2>/dev/null | grep -q "^$CLUSTER_NAME$"; then
     echo -e "${YELLOW}Cluster $CLUSTER_NAME already exists${NC}"
     if kubectl cluster-info --context "kind-$CLUSTER_NAME" &>/dev/null; then
-        echo -e "${GREEN}✓ Cluster is healthy${NC}"
+        echo -e "${GREEN}[OK] Cluster is healthy${NC}"
         exit 0
     else
         echo -e "${YELLOW}Recreating unhealthy cluster...${NC}"
@@ -65,6 +65,6 @@ kubectl create namespace modernblog --dry-run=client -o yaml | kubectl apply -f 
 kubectl config use-context "kind-$CLUSTER_NAME"
 kubectl config set-context --current --namespace=modernblog
 
-echo -e "${GREEN}✓ Kind cluster ready!${NC}"
+echo -e "${GREEN}Kind cluster ready!${NC}"
 echo "Context: kind-$CLUSTER_NAME"
 echo "Namespace: modernblog"

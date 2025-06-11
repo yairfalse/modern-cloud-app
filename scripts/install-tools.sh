@@ -16,7 +16,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
     OS="linux"
 else
-    echo -e "${RED}❌ Unsupported OS: $OSTYPE${NC}"
+    echo -e "${RED}ERROR: Unsupported OS: $OSTYPE${NC}"
     exit 1
 fi
 
@@ -36,8 +36,7 @@ install_macos() {
         docker \
         kubectl \
         kind \
-        skaffold \
-        terraform
+        skaffold
     
     # Claude Code CLI
     if ! command -v claude-code &> /dev/null; then
@@ -73,14 +72,18 @@ install_linux() {
         sudo sh get-docker.sh
         sudo usermod -aG docker $USER
         rm get-docker.sh
+        echo -e "${YELLOW}Note: You may need to log out and back in for Docker group changes to take effect${NC}"
     fi
 
     # Install kubectl
     if ! command -v kubectl &> /dev/null; then
         echo -e "${YELLOW}Installing kubectl...${NC}"
-        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-        chmod +x kubectl
-        sudo mv kubectl /usr/local/bin/
+        # Use proper GPG key installation to avoid warnings
+        sudo mkdir -p /etc/apt/keyrings
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+        sudo apt-get update
+        sudo apt-get install -y kubectl
     fi
 
     # Install kind
@@ -99,18 +102,10 @@ install_linux() {
         sudo mv skaffold /usr/local/bin
     fi
 
-    # Install Terraform
-    if ! command -v terraform &> /dev/null; then
-        echo -e "${YELLOW}Installing Terraform...${NC}"
-        wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-        echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-        sudo apt update && sudo apt install terraform
-    fi
-
     # Claude Code CLI
     if ! command -v claude-code &> /dev/null; then
         echo -e "${YELLOW}Installing Claude Code CLI...${NC}"
-        npm install -g @anthropic-ai/claude-code
+        sudo npm install -g @anthropic-ai/claude-code
     fi
 }
 
@@ -124,21 +119,21 @@ fi
 # Verify installations
 echo -e "${YELLOW}Verifying installations...${NC}"
 
-TOOLS=("go" "node" "docker" "kubectl" "kind" "skaffold" "terraform" "claude-code")
+TOOLS=("go" "node" "docker" "kubectl" "kind" "skaffold" "claude-code")
 FAILED=()
 
 for tool in "${TOOLS[@]}"; do
     if command -v "$tool" &> /dev/null; then
-        echo -e "${GREEN}✓ $tool installed${NC}"
+        echo -e "${GREEN}[OK] $tool installed${NC}"
     else
-        echo -e "${RED}✗ $tool not found${NC}"
+        echo -e "${RED}[FAIL] $tool not found${NC}"
         FAILED+=("$tool")
     fi
 done
 
 if [[ ${#FAILED[@]} -gt 0 ]]; then
-    echo -e "${RED}❌ Failed to install: ${FAILED[*]}${NC}"
+    echo -e "${RED}ERROR: Failed to install: ${FAILED[*]}${NC}"
     exit 1
 fi
 
-echo -e "${GREEN}🎉 All essential tools installed successfully!${NC}"
+echo -e "${GREEN}All essential tools installed successfully!${NC}"
