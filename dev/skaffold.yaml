@@ -14,16 +14,7 @@ build:
       docker:
         dockerfile: Dockerfile
 
-manifests:
-  rawYaml:
-    - dev/postgres.yaml
-
 deploy:
   kubectl:
-    defaultNamespace: modernblog
-
-portForward:
-  - resourceType: service
-    resourceName: postgres
-    port: 5432
-    localPort: 5432
+    manifests:
+      - k8s/*.yaml
