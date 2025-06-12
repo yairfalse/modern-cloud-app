@@ -1,6 +1,7 @@
 {
-  "name": "terraform-pipeline",
-  "sdk": "go",
-  "source": ".",
-  "engineVersion": "v0.9.5"
+  "name": "backend-pipeline",
+  "engineVersion": "v0.18.9",
+  "sdk": {
+    "source": "go"
+  }
 }
