@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom'
 
 export default function Layout() {
   return (
@@ -11,14 +11,14 @@ export default function Layout() {
                 App
               </Link>
               <div className="flex space-x-4">
-                <Link 
-                  to="/" 
+                <Link
+                  to="/"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Home
                 </Link>
-                <Link 
-                  to="/about" 
+                <Link
+                  to="/about"
                   className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                 >
                   About
@@ -32,5 +32,5 @@ export default function Layout() {
         <Outlet />
       </main>
     </div>
-  );
+  )
 }
