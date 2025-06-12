@@ -1,0 +1,351 @@
+# golangci-lint configuration
+# https://golangci-lint.run/usage/configuration/
+
+# This is the configuration for golangci-lint v1.50.0+
+# Run: golangci-lint run
+
+# Options for analysis running
+run:
+  # Timeout for analysis, e.g. 30s, 5m, default is 1m
+  timeout: 5m
+
+  # Include test files or not, default is true
+  tests: true
+
+  # List of build tags, all linters use it. Default is empty list
+  build-tags: []
+
+  # Which dirs to skip: issues from them won't be reported
+  # Default dirs are skipped independently from this option's value (see skip-dirs-use-default)
+  skip-dirs:
+    - vendor
+    - third_party
+    - testdata
+    - examples
+    - Godeps
+    - builtin
+
+  # Enables skipping of directories:
+  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  skip-dirs-use-default: true
+
+  # Which files to skip: they will be analyzed, but issues from them
+  # won't be reported. Default value is empty list
+  skip-files: []
+
+  # Number of operating system threads (`GOMAXPROCS`) that can be used simultaneously.
+  # If it is explicitly set to 0 (i.e. not the default) then golangci-lint will automatically set
+  # the value according to the go runtime `GOMAXPROCS` function.
+  # Default: number of logical CPUs usable by the current process
+  concurrency: 0
+
+# All available settings of specific linters
+linters-settings:
+  # Check for pass []any as any in variadic func(...any)
+  asasalint:
+    exclude:
+      - "^fmt\\."
+    use-builtin-exclusions: true
+
+  # Report about not checking of errors in type assertions
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - io.Copy
+      - io.WriteString
+
+  # Forbids identifiers
+  forbidigo:
+    forbid:
+      - ^print.*$
+      - fmt\.Print.*
+    exclude-godoc-examples: true
+
+  # Checks the number of lines in a function
+  funlen:
+    lines: 100
+    statements: 50
+
+  # Minimal code complexity to report
+  gocyclo:
+    min-complexity: 15
+
+  # Checks whether code was gofmt-ed
+  gofmt:
+    simplify: true
+
+  # Check import statements are formatted according to the 'goimports' command
+  goimports:
+    local-prefixes: github.com/yourusername/modern-cloud-app
+
+  # Minimal confidence for issues
+  golint:
+    min-confidence: 0.8
+
+  # Inspects source code for security problems
+  gosec:
+    severity: low
+    confidence: low
+    excludes:
+      - G104 # Audit errors not checked
+      - G204 # Audit use of command execution
+
+  # Linter for Go source code that specializes in simplifying code
+  gosimple:
+    checks: ["all"]
+
+  # Vet examines Go source code and reports suspicious constructs
+  govet:
+    check-shadowing: true
+    enable-all: true
+
+  # Reports long lines
+  lll:
+    line-length: 120
+    tab-width: 1
+
+  # Finds commonly misspelled English words in comments
+  misspell:
+    locale: US
+    ignore-words: []
+
+  # Finds naked returns in functions greater than a specified function length
+  nakedret:
+    max-func-lines: 30
+
+  # Reports deeply nested if statements
+  nestif:
+    min-complexity: 4
+
+  # Finds slice declarations that could potentially be pre-allocated
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: true
+
+  # Fast, configurable, extensible, flexible, and beautiful linter for Go
+  revive:
+    severity: warning
+    enable-all-rules: false
+    confidence: 0.8
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+        arguments:
+          - checkPrivateReceivers
+          - sayRepetitiveInsteadOfStutters
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+  # Staticcheck is a go vet on steroids, applying a ton of static analysis checks
+  staticcheck:
+    checks: ["all"]
+
+  # Like the front-end of a Go compiler, parses and type-checks Go code
+  typecheck: {}
+
+  # Checks Go code for unused constants, variables, functions and types
+  unused: {}
+
+  # Tool for detection of FIXME, TODO and other comment keywords
+  godox:
+    keywords:
+      - TODO
+      - FIXME
+      - OPTIMIZE
+      - HACK
+
+  # Whitespace Linter
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+linters:
+  enable:
+    # Default linters
+    - errcheck        # checking for unchecked errors
+    - gosimple        # simplifying code
+    - govet          # reports suspicious constructs
+    - ineffassign    # detects when assignments to existing variables are not used
+    - staticcheck    # staticcheck
+    - typecheck      # type checking
+    - unused         # checks for unused constants, variables, functions and types
+    
+    # Additional linters
+    - asasalint      # check for pass []any as any in variadic func(...any)
+    - bodyclose      # checks whether HTTP response body is closed successfully
+    - cyclop         # checks function and package cyclomatic complexity
+    - dupl           # code clone detection
+    - durationcheck  # checks for two durations multiplied together
+    - errorlint      # find code that will cause problems with Go 1.13 error wrapping
+    - exhaustive     # checks exhaustiveness of enum switch statements
+    - exportloopref  # checks for pointers to enclosing loop variables
+    - forbidigo      # forbids identifiers
+    - funlen         # checks for long functions
+    - gochecknoinits # checks that no init functions are present
+    - gocognit       # computes cognitive complexity of functions
+    - goconst        # finds repeated strings that could be replaced by constants
+    - gocritic       # provides diagnostics for bugs, performance and style issues
+    - gocyclo        # computes cyclomatic complexity
+    - godot          # checks if comments end in a period
+    - gofmt          # checks whether code was gofmt-ed
+    - goimports      # checks import statements formatting
+    - gomnd          # detects magic numbers
+    - goprintffuncname # checks that printf-like functions are named with f at the end
+    - gosec          # inspects source code for security problems
+    - lll            # reports long lines
+    - makezero       # finds slice declarations with non-zero initial length
+    - misspell       # finds commonly misspelled English words
+    - nakedret       # finds naked returns
+    - nestif         # reports deeply nested if statements
+    - nilerr         # finds code that returns nil even if it checks that error is not nil
+    - nlreturn       # checks for a new line before return and branch statements
+    - noctx          # finds sending http request without context.Context
+    - nolintlint     # reports ill-formed or insufficient nolint directives
+    - predeclared    # finds code that shadows predeclared identifiers
+    - promlinter     # checks Prometheus metrics naming
+    - revive         # fast, configurable, extensible, flexible, and beautiful linter
+    - rowserrcheck   # checks whether Err of rows is checked successfully
+    - sqlclosecheck  # checks that sql.Rows and sql.Stmt are closed
+    - tenv           # detects using os.Setenv instead of t.Setenv
+    - testpackage    # makes you use a separate _test package
+    - tparallel      # detects inappropriate usage of t.Parallel()
+    - unconvert      # detects unnecessary type conversions
+    - unparam        # reports unused function parameters
+    - wastedassign   # finds wasted assignment statements
+    - whitespace     # detects leading and trailing whitespace
+
+  disable:
+    # Deprecated linters
+    - deadcode       # deprecated: replaced by unused
+    - exhaustivestruct # deprecated: replaced by exhaustruct
+    - golint         # deprecated: replaced by revive
+    - ifshort        # deprecated
+    - interfacer     # deprecated
+    - maligned       # deprecated
+    - nosnakecase    # deprecated
+    - scopelint      # deprecated: replaced by exportloopref
+    - structcheck    # deprecated: replaced by unused
+    - varcheck       # deprecated: replaced by unused
+    
+    # Disabled linters
+    - exhaustruct    # checks if all struct's fields are initialized
+    - gci            # controls Go package import order
+    - gochecknoglobals # checks that no globals are present
+    - godox          # detects FIXME, TODO and other comment keywords
+    - goerr113       # checks the errors handling expressions
+    - goheader       # checks is file header matches pattern
+    - gomoddirectives # manages go.mod directives
+    - gomodguard     # allow/block list linter for direct module dependencies
+    - ireturn        # accept interfaces, return concrete types
+    - paralleltest   # detects missing usage of t.Parallel()
+    - prealloc       # finds slice declarations that could be pre-allocated
+    - wrapcheck      # checks that errors from external packages are wrapped
+    - wsl            # forces blank lines in various places
+
+  # Run only fast linters from enabled linters set (first run won't be fast)
+  fast: false
+
+issues:
+  # List of regexps of issue texts to exclude
+  exclude:
+    # errcheck
+    - "Error return value of .((os\\.)?std(out|err)\\..*|.*Close|.*Flush|os\\.Remove(All)?|.*print(f|ln)?|os\\.(Un)?Setenv). is not checked"
+    # gosec
+    - "G104: Errors unhandled"
+    - "G204: Subprocess launched with variable"
+    - "G304: Potential file inclusion via variable"
+    # stylecheck
+    - "ST1000: at least one file in a package should have a package comment"
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - dupl
+        - errcheck
+        - funlen
+        - gocognit
+        - goconst
+        - gocyclo
+        - gosec
+        - noctx
+        - wrapcheck
+
+    # Exclude known fmt functions from forbidigo
+    - linters:
+        - forbidigo
+      text: "use of `fmt.Printf` forbidden"
+
+    # Exclude certain revive rules in test files
+    - path: _test\.go
+      linters:
+        - revive
+      text: "don't use dot imports"
+
+    # Allow complex functions in main packages
+    - path: cmd/.*\.go
+      linters:
+        - gocyclo
+        - gocognit
+        - funlen
+
+  # Independently from option `exclude`, golangci-lint uses default exclude patterns
+  exclude-use-default: false
+
+  # Fix found issues (if it's supported by the linter)
+  fix: false
+
+  # Maximum issues count per one linter. Set to 0 to disable
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text. Set to 0 to disable
+  max-same-issues: 0
+
+  # Show only new issues created after git revision
+  new: false
+
+  # Show only new issues created in git patch with set file path
+  new-from-patch: ""
+
+  # Show only new issues created in git patch with set file revision
+  new-from-rev: ""
+
+severity:
+  # Default value is empty string.
+  # Set the default severity for issues. If severity rules are defined and the issues
+  # do not match or no severity is provided to the rule this will be the default
+  # severity applied. Severities should match the supported severity names of the
+  # selected out format.
+  default-severity: error
+
+  # The default value is false.
+  # If set to true severity-rules regular expressions become case-sensitive
+  case-sensitive: false
+
+  # Default value is empty list.
+  # When a list of severity rules are provided, severity information will be added to lint
+  # issues. Severity rules have the same filtering capability as exclude rules except you
+  # are allowed to specify one matcher per severity rule.
+  rules: []
