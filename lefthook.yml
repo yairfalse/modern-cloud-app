@@ -9,7 +9,10 @@ pre-commit:
       run: go test ./...
     frontend-lint:
       glob: "frontend/**/*.{ts,tsx,js,jsx}"
-      run: cd frontend && npm run lint
+      run: cd frontend && npm run lint:staged
+    frontend-format:
+      glob: "frontend/**/*.{ts,tsx,js,jsx,css,md}"
+      run: cd frontend && npm run format:staged
     commitlint:
       run: echo "{1}" | npx commitlint
 
