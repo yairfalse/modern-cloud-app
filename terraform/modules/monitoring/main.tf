@@ -1,5 +1,16 @@
 # Monitoring module for ModernBlog
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+  }
+}
+
 # Create a monitoring workspace
 resource "google_monitoring_dashboard" "main" {
   dashboard_json = jsonencode({

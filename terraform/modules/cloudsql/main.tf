@@ -1,5 +1,20 @@
 # Cloud SQL PostgreSQL module for ModernBlog
 
+terraform {
+  required_version = ">= 1.5.0"
+  
+  required_providers {
+    google = {
+      source  = "hashicorp/google"
+      version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
+  }
+}
+
 # Random suffix for database instance name
 resource "random_id" "db_suffix" {
   byte_length = 4

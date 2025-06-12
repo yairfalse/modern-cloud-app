@@ -93,35 +93,6 @@ variable "database_config" {
   }
 }
 
-# Storage configuration
-variable "storage_config" {
-  description = "Configuration for Cloud Storage buckets"
-  type = object({
-    storage_class      = string
-    versioning_enabled = bool
-    lifecycle_rules    = list(object({
-      age    = number
-      action = string
-    }))
-    cors_origins       = list(string)
-  })
-  default = {
-    storage_class      = "STANDARD"
-    versioning_enabled = true
-    lifecycle_rules = [
-      {
-        age    = 30
-        action = "SetStorageClass:NEARLINE"
-      },
-      {
-        age    = 90
-        action = "SetStorageClass:COLDLINE"
-      }
-    ]
-    cors_origins = ["*"]
-  }
-}
-
 # Pub/Sub topics configuration
 variable "pubsub_topics" {
   description = "List of Pub/Sub topics to create"
@@ -147,35 +118,4 @@ variable "pubsub_topics" {
       message_ordering          = false
     }
   ]
-}
-
-# Monitoring configuration
-variable "monitoring_config" {
-  description = "Configuration for monitoring and alerting"
-  type = object({
-    notification_channels = list(object({
-      type  = string
-      email = string
-    }))
-    alert_thresholds = object({
-      cpu_utilization    = number
-      memory_utilization = number
-      disk_utilization   = number
-      error_rate         = number
-    })
-  })
-  default = {
-    notification_channels = [
-      {
-        type  = "email"
-        email = "alerts@example.com"
-      }
-    ]
-    alert_thresholds = {
-      cpu_utilization    = 80
-      memory_utilization = 85
-      disk_utilization   = 90
-      error_rate         = 5
-    }
-  }
 }

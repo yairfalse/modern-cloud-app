@@ -1,9 +1,0 @@
-# Backend configuration for production environment
-# Copy this file to backend-prod.hcl and update with your values
-# Use: terraform init -backend-config=backend-prod.hcl
-
-bucket = "my-terraform-state-prod"
-prefix = "modernblog/prod"
-
-# Enable encryption for production state
-encryption_key = "projects/my-project-prod/locations/global/keyRings/terraform/cryptoKeys/terraform-state"

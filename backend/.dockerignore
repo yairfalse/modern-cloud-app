@@ -1,0 +1,35 @@
+# Ignore version control
+.git
+.gitignore
+
+# Ignore documentation
+*.md
+README.md
+
+# Ignore test files during build
+*_test.go
+
+# Ignore database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore Docker files
+Dockerfile
+.dockerignore
+docker-compose*.yml
