@@ -1,49 +1,68 @@
-// BlogPost interface matching the backend Go struct
+/**
+ * BlogPost interface representing a blog post entity
+ */
 export interface BlogPost {
-  id: number
-  title: string
-  content: string
-  author: string
-  created_at: string // ISO date string
+  /** Unique identifier for the blog post */
+  id: string;
+  /** Title of the blog post */
+  title: string;
+  /** Full content of the blog post */
+  content: string;
+  /** First 150 characters of the content for preview */
+  excerpt: string;
+  /** Name of the post author */
+  authorName: string;
+  /** Unique identifier of the author */
+  authorId: string;
+  /** ISO date string when the post was created */
+  createdAt: string;
+  /** ISO date string when the post was last updated */
+  updatedAt: string;
+  /** Whether the post is published or draft */
+  published: boolean;
 }
 
-// User interface for authentication
+/**
+ * User interface representing a user entity
+ */
 export interface User {
-  id: number
-  username: string
-  email: string
-  created_at: string
+  /** Unique identifier for the user */
+  id: string;
+  /** User's display name */
+  name: string;
+  /** User's email address */
+  email: string;
+  /** ISO date string when the user was created */
+  createdAt: string;
 }
 
-// API Response types
-export interface ApiResponse<T = any> {
-  data?: T
-  error?: string
-  message?: string
+/**
+ * Comment interface representing a comment on a blog post
+ */
+export interface Comment {
+  /** Unique identifier for the comment */
+  id: string;
+  /** ID of the blog post this comment belongs to */
+  postId: string;
+  /** ID of the user who made the comment */
+  userId: string;
+  /** Name of the comment author */
+  authorName: string;
+  /** Content of the comment */
+  content: string;
+  /** ISO date string when the comment was created */
+  createdAt: string;
 }
 
-export interface BlogPostsResponse extends ApiResponse {
-  data: BlogPost[]
-}
-
-export interface BlogPostResponse extends ApiResponse {
-  data: BlogPost
-}
-
-export interface HealthResponse extends ApiResponse {
-  status: string
-}
-
-// Form types for creating/updating posts
-export interface CreateBlogPostRequest {
-  title: string
-  content: string
-  author: string
-}
-
-export interface UpdateBlogPostRequest extends CreateBlogPostRequest {}
-
-// Error response type
-export interface ErrorResponse {
-  error: string
+/**
+ * Generic API response wrapper
+ * @template T - The type of data being returned
+ */
+export interface ApiResponse<T> {
+  /** The response data */
+  data: T;
+  /** Optional success message */
+  message?: string;
+  /** Optional error message */
+  error?: string;
 }
