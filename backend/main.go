@@ -10,12 +10,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// BlogPost represents a blog post in the system.
 type BlogPost struct {
-	ID        int       `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
 	Title     string    `json:"title" binding:"required"`
 	Content   string    `json:"content" binding:"required"`
 	Author    string    `json:"author" binding:"required"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int       `json:"id"`
 }
 
 var db *sql.DB
@@ -35,7 +36,7 @@ func initDB() {
 		author TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);`
-	
+
 	if _, err := db.Exec(createTableSQL); err != nil {
 		log.Fatal("Failed to create table:", err)
 	}
@@ -52,6 +53,7 @@ func getPosts(c *gin.Context) {
 	if err != nil {
 		log.Printf("Error fetching posts: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
+
 		return
 	}
 	defer rows.Close()
@@ -61,10 +63,19 @@ func getPosts(c *gin.Context) {
 		var post BlogPost
 		if err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Author, &post.CreatedAt); err != nil {
 			log.Printf("Error scanning post: %v", err)
+
 			continue
 		}
 		posts = append(posts, post)
 	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error iterating posts: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts"})
+
+		return
+	}
+
 	c.JSON(http.StatusOK, posts)
 }
 
@@ -74,6 +85,7 @@ func createPost(c *gin.Context) {
 	if err := c.ShouldBindJSON(&post); err != nil {
 		log.Printf("Invalid request body: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
 		return
 	}
 
@@ -82,10 +94,17 @@ func createPost(c *gin.Context) {
 	if err != nil {
 		log.Printf("Error creating post: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
+
 		return
 	}
 
-	id, _ := result.LastInsertId()
+	id, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get post ID"})
+
+		return
+	}
 	post.ID = int(id)
 	post.CreatedAt = time.Now()
 	c.JSON(http.StatusCreated, post)
@@ -94,11 +113,12 @@ func createPost(c *gin.Context) {
 func updatePost(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("PUT /posts/%s", id)
-	
+
 	var post BlogPost
 	if err := c.ShouldBindJSON(&post); err != nil {
 		log.Printf("Invalid request body: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
 		return
 	}
 
@@ -107,12 +127,20 @@ func updatePost(c *gin.Context) {
 	if err != nil {
 		log.Printf("Error updating post: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+
 		return
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+
+		return
+	}
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully"})
@@ -121,17 +149,25 @@ func updatePost(c *gin.Context) {
 func deletePost(c *gin.Context) {
 	id := c.Param("id")
 	log.Printf("DELETE /posts/%s", id)
-	
+
 	result, err := db.Exec("DELETE FROM posts WHERE id = ?", id)
 	if err != nil {
 		log.Printf("Error deleting post: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+
 		return
 	}
 
-	rowsAffected, _ := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Error getting rows affected: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+
+		return
+	}
 	if rowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
@@ -142,7 +178,7 @@ func main() {
 	defer db.Close()
 
 	router := gin.Default()
-	
+
 	router.GET("/health", healthCheck)
 	router.GET("/posts", getPosts)
 	router.POST("/posts", createPost)
@@ -151,6 +187,9 @@ func main() {
 
 	log.Println("Starting server on :8080")
 	if err := router.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
+		log.Printf("Failed to start server: %v", err)
+		db.Close()
+
+		return
 	}
 }

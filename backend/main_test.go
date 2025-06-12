@@ -49,6 +49,7 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 		rows, err := db.Query("SELECT id, title, content, author, created_at FROM posts ORDER BY created_at DESC")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve posts"})
+
 			return
 		}
 		defer rows.Close()
@@ -59,9 +60,16 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 			err := rows.Scan(&post.ID, &post.Title, &post.Content, &post.Author, &post.CreatedAt)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to scan post"})
+
 				return
 			}
 			posts = append(posts, post)
+		}
+
+		if err := rows.Err(); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to iterate posts"})
+
+			return
 		}
 
 		c.JSON(http.StatusOK, posts)
@@ -71,6 +79,7 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 		var post BlogPost
 		if err := c.ShouldBindJSON(&post); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
 			return
 		}
 
@@ -78,10 +87,16 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 			post.Title, post.Content, post.Author)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create post"})
+
 			return
 		}
 
-		id, _ := result.LastInsertId()
+		id, err := result.LastInsertId()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get insert ID"})
+
+			return
+		}
 		post.ID = int(id)
 		post.CreatedAt = time.Now()
 
@@ -93,6 +108,7 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 		var post BlogPost
 		if err := c.ShouldBindJSON(&post); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
 			return
 		}
 
@@ -100,12 +116,20 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 			post.Title, post.Content, post.Author, id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+
 			return
 		}
 
-		rowsAffected, _ := result.RowsAffected()
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post"})
+
+			return
+		}
+
 		if rowsAffected == 0 {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+
 			return
 		}
 
@@ -118,12 +142,20 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 		result, err := db.Exec("DELETE FROM posts WHERE id = ?", id)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+
 			return
 		}
 
-		rowsAffected, _ := result.RowsAffected()
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete post"})
+
+			return
+		}
+
 		if rowsAffected == 0 {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+
 			return
 		}
 
@@ -175,8 +207,8 @@ func TestCreateBlogPost(t *testing.T) {
 	tests := []struct {
 		name         string
 		payload      BlogPost
-		expectedCode int
 		checkResult  bool
+		expectedCode int
 	}{
 		{
 			name: "Valid post",
@@ -265,12 +297,12 @@ func TestGetBlogPosts(t *testing.T) {
 	// Insert test data with explicit timestamps to ensure ordering
 	baseTime := time.Now()
 	testPosts := []struct {
-		post      BlogPost
 		createdAt time.Time
+		post      BlogPost
 	}{
-		{BlogPost{Title: "First Post", Content: "First content", Author: "Author 1"}, baseTime},
-		{BlogPost{Title: "Second Post", Content: "Second content", Author: "Author 2"}, baseTime.Add(1 * time.Hour)},
-		{BlogPost{Title: "Third Post", Content: "Third content", Author: "Author 3"}, baseTime.Add(2 * time.Hour)},
+		{baseTime, BlogPost{Title: "First Post", Content: "First content", Author: "Author 1"}},
+		{baseTime.Add(1 * time.Hour), BlogPost{Title: "Second Post", Content: "Second content", Author: "Author 2"}},
+		{baseTime.Add(2 * time.Hour), BlogPost{Title: "Third Post", Content: "Third content", Author: "Author 3"}},
 	}
 
 	for _, tp := range testPosts {
@@ -304,7 +336,7 @@ func TestGetBlogPosts(t *testing.T) {
 	for i, post := range response {
 		foundTitles[i] = post.Title
 	}
-	
+
 	// The posts should be in reverse order of insertion
 	if foundTitles[0] != "Third Post" || foundTitles[1] != "Second Post" || foundTitles[2] != "First Post" {
 		t.Errorf("Posts are not ordered correctly. Got: %v", foundTitles)
@@ -328,9 +360,9 @@ func TestUpdateBlogPost(t *testing.T) {
 	}
 
 	tests := []struct {
+		payload      BlogPost
 		name         string
 		postID       string
-		payload      BlogPost
 		expectedCode int
 	}{
 		{
