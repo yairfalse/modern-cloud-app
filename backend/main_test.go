@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -52,7 +53,11 @@ func setupTestRouter(db *sql.DB) *gin.Engine {
 
 			return
 		}
-		defer rows.Close()
+		defer func() {
+			if err := rows.Close(); err != nil {
+				log.Printf("Error closing rows: %v", err)
+			}
+		}()
 
 		posts := []BlogPost{}
 		for rows.Next() {
@@ -175,7 +180,11 @@ func TestHealthEndpoint(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -188,7 +197,9 @@ func TestHealthEndpoint(t *testing.T) {
 	}
 
 	var response map[string]string
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if response["status"] != "healthy" {
 		t.Errorf("Expected status 'healthy', got '%s'", response["status"])
@@ -200,7 +211,11 @@ func TestCreateBlogPost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -263,7 +278,9 @@ func TestCreateBlogPost(t *testing.T) {
 
 			if tt.checkResult && w.Code == http.StatusCreated {
 				var response BlogPost
-				json.Unmarshal(w.Body.Bytes(), &response)
+				if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+					t.Fatalf("Failed to unmarshal response: %v", err)
+				}
 
 				if response.ID == 0 {
 					t.Error("Expected non-zero ID")
@@ -290,7 +307,11 @@ func TestGetBlogPosts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -323,7 +344,9 @@ func TestGetBlogPosts(t *testing.T) {
 	}
 
 	var response []BlogPost
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if len(response) != len(testPosts) {
 		t.Errorf("Expected %d posts, got %d", len(testPosts), len(response))
@@ -348,7 +371,11 @@ func TestUpdateBlogPost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -416,7 +443,11 @@ func TestDeleteBlogPost(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -476,7 +507,11 @@ func TestEmptyPostsList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to setup test database: %v", err)
 	}
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := setupTestRouter(db)
 
@@ -489,7 +524,9 @@ func TestEmptyPostsList(t *testing.T) {
 	}
 
 	var response []BlogPost
-	json.Unmarshal(w.Body.Bytes(), &response)
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("Failed to unmarshal response: %v", err)
+	}
 
 	if response == nil {
 		t.Error("Expected empty array, got nil")

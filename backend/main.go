@@ -56,7 +56,11 @@ func getPosts(c *gin.Context) {
 
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("Error closing rows: %v", err)
+		}
+	}()
 
 	var posts []BlogPost
 	for rows.Next() {
@@ -175,7 +179,11 @@ func deletePost(c *gin.Context) {
 
 func main() {
 	initDB()
-	defer db.Close()
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
+	}()
 
 	router := gin.Default()
 
@@ -188,7 +196,9 @@ func main() {
 	log.Println("Starting server on :8080")
 	if err := router.Run(":8080"); err != nil {
 		log.Printf("Failed to start server: %v", err)
-		db.Close()
+		if err := db.Close(); err != nil {
+			log.Printf("Error closing database: %v", err)
+		}
 
 		return
 	}
