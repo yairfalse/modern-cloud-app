@@ -1,9 +1,6 @@
-# Main Terraform configuration for ModernBlog platform
-# This file orchestrates all modules and creates the infrastructure
-
+# ModernBlog Single Cluster + Namespaces Configuration
 terraform {
   required_version = ">= 1.5.0"
-  
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -13,15 +10,15 @@ terraform {
       source  = "hashicorp/google-beta"
       version = "~> 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~> 2.24"
     }
   }
-  
-  # Backend configuration for state management
-  # Configure based on environment using backend config files
-  backend "gcs" {}
+
+  backend "gcs" {
+    # Backend configuration provided via backend.hcl
+  }
 }
 
 # Provider configuration
@@ -35,148 +32,139 @@ provider "google-beta" {
   region  = var.region
 }
 
-# Local variables for resource naming and tagging
-locals {
-  environment = var.environment
-  app_name    = "modernblog"
-  
-  # Common labels applied to all resources
-  common_labels = {
-    app         = local.app_name
-    environment = local.environment
-    managed_by  = "terraform"
-    team        = var.team_name
-  }
-  
-  # Resource name prefix
-  name_prefix = "${local.app_name}-${local.environment}"
-}
-
-# Enable required APIs
-resource "google_project_service" "apis" {
-  for_each = toset([
-    "compute.googleapis.com",
-    "container.googleapis.com",
-    "sqladmin.googleapis.com",
-    "storage.googleapis.com",
-    "pubsub.googleapis.com",
-    "monitoring.googleapis.com",
-    "logging.googleapis.com",
-    "cloudresourcemanager.googleapis.com",
-    "iam.googleapis.com",
-    "secretmanager.googleapis.com",
-  ])
-  
-  service = each.key
-  
-  disable_on_destroy = false
-}
-
-# VPC Network module
+# Networking module
 module "networking" {
   source = "./modules/networking"
-  
-  project_id    = var.project_id
-  region        = var.region
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
+
+  project_id  = var.project_id
+  region      = var.region
+  name_prefix = var.name_prefix
+  environment = "single-cluster"
+
   # Network configuration
-  cidr_ranges = var.cidr_ranges
-  
-  depends_on = [google_project_service.apis]
+  cidr_ranges = {
+    primary_subnet = "10.0.0.0/24"
+    pods_range     = "10.0.1.0/24"
+    services_range = "10.0.2.0/24"
+  }
 }
 
-# IAM module for service accounts and roles
-module "iam" {
-  source = "./modules/iam"
-  
-  project_id    = var.project_id
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  depends_on = [google_project_service.apis]
-}
-
-# GKE cluster module
+# GKE Cluster module
 module "gke" {
   source = "./modules/gke"
-  
-  project_id    = var.project_id
-  region        = var.region
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  # Network configuration
-  network           = module.networking.network_name
-  subnetwork        = module.networking.subnet_name
-  pods_range_name   = module.networking.pods_range_name
-  services_range_name = module.networking.services_range_name
-  
-  # Cluster configuration
-  cluster_config = var.gke_cluster_config
-  
-  # Service account
-  service_account_email = module.iam.gke_service_account_email
-  
-  depends_on = [module.networking, module.iam]
+
+  project_id  = var.project_id
+  region      = var.region
+  name_prefix = var.name_prefix
+  environment = "single-cluster"
+
+  # Use networking outputs
+  network    = module.networking.network_name
+  subnetwork = module.networking.subnet_name
+
+  # Single cluster configuration
+  cluster_config = {
+    min_node_count     = 1
+    max_node_count     = 3
+    machine_type       = "e2-medium"
+    disk_size_gb       = 50
+    disk_type          = "pd-standard"
+    enable_autopilot   = false
+    release_channel    = "RAPID"
+    k8s_version_prefix = "1.28"
+  }
 }
 
-# Cloud SQL PostgreSQL module
+# Database module
 module "cloudsql" {
   source = "./modules/cloudsql"
-  
-  project_id    = var.project_id
-  region        = var.region
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  # Network configuration
-  network_id = module.networking.network_id
-  
-  # Database configuration
-  database_config = var.database_config
-  
-  depends_on = [module.networking]
+
+  project_id  = var.project_id
+  region      = var.region
+  name_prefix = var.name_prefix
+  environment = "single-cluster"
+
+  network = module.networking.network_name
+
+  database_config = {
+    database_version       = "POSTGRES_15"
+    tier                   = "db-f1-micro"
+    disk_size              = 10
+    disk_type              = "PD_HDD"
+    availability_type      = "ZONAL"
+    backup_enabled         = true
+    backup_start_time      = "03:00"
+    point_in_time_recovery = false
+    high_availability      = false
+  }
 }
 
-# Cloud Storage module
+# Storage module
 module "storage" {
   source = "./modules/storage"
-  
-  project_id    = var.project_id
-  region        = var.region
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  # Storage configuration
-  storage_config = var.storage_config
-  
-  # Service account for storage access
-  storage_admin_email = module.iam.storage_admin_email
-  
-  depends_on = [module.iam]
+
+  project_id  = var.project_id
+  region      = var.region
+  name_prefix = var.name_prefix
+  environment = "single-cluster"
+
+  storage_config = {
+    storage_class      = "STANDARD"
+    versioning_enabled = false
+    cors_origins       = ["http://localhost:3000", "http://localhost:5173"]
+  }
 }
 
-# Pub/Sub module
-module "pubsub" {
-  source = "./modules/pubsub"
-  
-  project_id    = var.project_id
-  environment   = local.environment
-  name_prefix   = local.name_prefix
-  common_labels = local.common_labels
-  
-  # Topic configuration
-  topics = var.pubsub_topics
-  
-  # Service account for Pub/Sub
-  pubsub_service_account_email = module.iam.pubsub_service_account_email
-  
-  depends_on = [module.iam]
+# Get cluster credentials for Kubernetes provider
+data "google_container_cluster" "primary" {
+  name     = module.gke.cluster_name
+  location = var.region
+
+  depends_on = [module.gke]
+}
+
+data "google_client_config" "default" {}
+
+# Kubernetes provider configuration
+provider "kubernetes" {
+  host                   = "https://${data.google_container_cluster.primary.endpoint}"
+  token                  = data.google_client_config.default.access_token
+  cluster_ca_certificate = base64decode(data.google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
+}
+
+# Create Namespaces
+resource "kubernetes_namespace" "modernblog_dev" {
+  metadata {
+    name = "modernblog-dev"
+    labels = {
+      environment = "dev"
+      team        = var.team_name
+    }
+  }
+
+  depends_on = [module.gke]
+}
+
+resource "kubernetes_namespace" "modernblog_prod" {
+  metadata {
+    name = "modernblog-prod"
+    labels = {
+      environment = "prod"
+      team        = var.team_name
+    }
+  }
+
+  depends_on = [module.gke]
+}
+
+resource "kubernetes_namespace" "monitoring" {
+  metadata {
+    name = "monitoring"
+    labels = {
+      purpose = "monitoring"
+      team    = var.team_name
+    }
+  }
+
+  depends_on = [module.gke]
 }

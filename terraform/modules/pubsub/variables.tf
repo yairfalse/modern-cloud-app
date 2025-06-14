@@ -31,7 +31,7 @@ variable "topics" {
   type = list(object({
     name                       = string
     message_retention_duration = string
-    message_ordering          = bool
+    message_ordering           = bool
   }))
 }
 

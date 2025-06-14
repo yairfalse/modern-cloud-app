@@ -53,13 +53,13 @@ output "custom_developer_role_id" {
 output "service_accounts" {
   description = "Map of all service account names to emails"
   value = {
-    gke          = google_service_account.gke.email
-    app          = google_service_account.app.email
-    storage      = google_service_account.storage_admin.email
-    pubsub       = google_service_account.pubsub.email
-    monitoring   = google_service_account.monitoring.email
-    backup       = google_service_account.backup.email
-    cicd         = google_service_account.cicd.email
+    gke        = google_service_account.gke.email
+    app        = google_service_account.app.email
+    storage    = google_service_account.storage_admin.email
+    pubsub     = google_service_account.pubsub.email
+    monitoring = google_service_account.monitoring.email
+    backup     = google_service_account.backup.email
+    cicd       = google_service_account.cicd.email
   }
 }
 

@@ -5,7 +5,7 @@ variable "project_id" {
   type        = string
 }
 
-variable "environment" {
+# variable "environment" {
   description = "Environment name"
   type        = string
 }

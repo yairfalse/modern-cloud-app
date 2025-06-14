@@ -20,7 +20,7 @@ variable "name_prefix" {
   type        = string
 }
 
-variable "common_labels" {
+# variable "common_labels" {
   description = "Common labels to apply to resources"
   type        = map(string)
 }

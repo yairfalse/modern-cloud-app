@@ -70,26 +70,26 @@ variable "gke_cluster_config" {
 variable "database_config" {
   description = "Configuration for Cloud SQL PostgreSQL"
   type = object({
-    database_version     = string
-    tier                 = string
-    disk_size            = number
-    disk_type            = string
-    availability_type    = string
-    backup_enabled       = bool
-    backup_start_time    = string
+    database_version       = string
+    tier                   = string
+    disk_size              = number
+    disk_type              = string
+    availability_type      = string
+    backup_enabled         = bool
+    backup_start_time      = string
     point_in_time_recovery = bool
-    high_availability    = bool
+    high_availability      = bool
   })
   default = {
-    database_version     = "POSTGRES_15"
-    tier                 = "db-f1-micro"
-    disk_size            = 10
-    disk_type            = "PD_SSD"
-    availability_type    = "ZONAL"
-    backup_enabled       = true
-    backup_start_time    = "03:00"
+    database_version       = "POSTGRES_15"
+    tier                   = "db-f1-micro"
+    disk_size              = 10
+    disk_type              = "PD_SSD"
+    availability_type      = "ZONAL"
+    backup_enabled         = true
+    backup_start_time      = "03:00"
     point_in_time_recovery = true
-    high_availability    = false
+    high_availability      = false
   }
 }
 
@@ -99,11 +99,11 @@ variable "storage_config" {
   type = object({
     storage_class      = string
     versioning_enabled = bool
-    lifecycle_rules    = list(object({
+    lifecycle_rules = list(object({
       age    = number
       action = string
     }))
-    cors_origins       = list(string)
+    cors_origins = list(string)
   })
   default = {
     storage_class      = "STANDARD"
@@ -128,23 +128,23 @@ variable "pubsub_topics" {
   type = list(object({
     name                       = string
     message_retention_duration = string
-    message_ordering          = bool
+    message_ordering           = bool
   }))
   default = [
     {
       name                       = "user-notifications"
       message_retention_duration = "604800s" # 7 days
-      message_ordering          = false
+      message_ordering           = false
     },
     {
       name                       = "content-updates"
       message_retention_duration = "604800s"
-      message_ordering          = true
+      message_ordering           = true
     },
     {
       name                       = "analytics-events"
       message_retention_duration = "86400s" # 1 day
-      message_ordering          = false
+      message_ordering           = false
     }
   ]
 }

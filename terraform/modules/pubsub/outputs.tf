@@ -63,12 +63,12 @@ output "topics_summary" {
   description = "Summary of all created topics with their configurations"
   value = {
     for k, v in google_pubsub_topic.topics : k => {
-      id                         = v.id
-      name                       = v.name
-      push_subscription          = google_pubsub_subscription.push_subscriptions[k].name
-      pull_subscription          = google_pubsub_subscription.pull_subscriptions[k].name
-      dead_letter_topic          = google_pubsub_topic.dead_letter[k].name
-      bigquery_subscription      = try(google_pubsub_subscription.bigquery_subscriptions[k].name, null)
+      id                    = v.id
+      name                  = v.name
+      push_subscription     = google_pubsub_subscription.push_subscriptions[k].name
+      pull_subscription     = google_pubsub_subscription.pull_subscriptions[k].name
+      dead_letter_topic     = google_pubsub_topic.dead_letter[k].name
+      bigquery_subscription = try(google_pubsub_subscription.bigquery_subscriptions[k].name, null)
     }
   }
 }
