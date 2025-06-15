@@ -1,5 +1,3 @@
-# Variables for the Cloud SQL module
-
 variable "project_id" {
   description = "The GCP project ID"
   type        = string
@@ -23,15 +21,16 @@ variable "name_prefix" {
 variable "common_labels" {
   description = "Common labels to apply to resources"
   type        = map(string)
+  default     = {}
 }
 
 variable "network_id" {
-  description = "The VPC network ID for private IP configuration"
+  description = "The VPC network ID"
   type        = string
 }
 
 variable "database_config" {
-  description = "Configuration for Cloud SQL PostgreSQL"
+  description = "Database configuration"
   type = object({
     database_version       = string
     tier                   = string
