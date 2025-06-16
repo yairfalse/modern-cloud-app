@@ -1,0 +1,15 @@
+module "cloudsql" {
+  source = "./modules/cloudsql"
+
+  project_id   = var.project_id
+  region       = var.region
+  name_prefix  = var.name_prefix
+  environment  = "single-cluster"
+
+  network_id     = module.networking.network_id
+  common_labels  = {}                                
+
+  database_config = {
+    # ... existing config
+  }
+}
