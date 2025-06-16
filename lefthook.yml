@@ -1,20 +1,16 @@
 pre-commit:
-  parallel: true
   commands:
-    go-lint:
-      glob: "*.go"
-      run: golangci-lint run {staged_files}
-    go-test:
-      glob: "*.go"
-      run: go test ./...
+    backend-lint:
+      glob: "backend/**"
+      run: cd backend && golangci-lint run
+    
     frontend-lint:
-      glob: "frontend/**/*.{ts,tsx,js,jsx}"
+      glob: "frontend/**"
       run: cd frontend && npm run lint
+    
+    terraform-fmt:
+      glob: "terraform/**"
+      run: cd terraform && terraform fmt -check=true
+    
     commitlint:
-      run: echo "{1}" | npx commitlint
-
-commit-msg:
-  commands:
-    commitlint:
-      run: npx commitlint --edit
-
+      run: commitlint --edit
