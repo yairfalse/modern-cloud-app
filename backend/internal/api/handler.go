@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 )
 
@@ -18,5 +19,8 @@ func WriteJSON(w http.ResponseWriter, status int, v interface{}) error {
 }
 
 func WriteError(w http.ResponseWriter, status int, message string) {
-	WriteJSON(w, status, Response{Error: message})
+	if err := WriteJSON(w, status, Response{Error: message}); err != nil {
+		// Log the error or handle it appropriately
+		log.Printf("Failed to write JSON response: %v", err)
+	}
 }
