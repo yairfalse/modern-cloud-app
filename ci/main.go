@@ -17,8 +17,8 @@ type ModernblogCi struct{}
 // Infrastructure Module - Terraform operations
 type Infrastructure struct{}
 
-// TerraformPlan runs terraform plan for infrastructure changes
-func (m *ModernblogCi) TerraformPlan(ctx context.Context, source *dagger.Directory, projectId string, region string, namePrefix string) (string, error) {
+// TerraformPlan runs terraform plan for infrastructure changes with GCP authentication
+func (m *ModernblogCi) TerraformPlan(ctx context.Context, source *dagger.Directory, projectId string, region string, namePrefix string, serviceAccountKey string) (string, error) {
 	// Create terraform.tfvars content
 	tfvarsContent := fmt.Sprintf(`project_id = "%s"
 region     = "%s"
@@ -30,6 +30,8 @@ name_prefix = "%s"
 		WithDirectory("/workspace", source).
 		WithWorkdir("/workspace/terraform").
 		WithNewFile("/workspace/terraform/terraform.tfvars", tfvarsContent).
+		WithNewFile("/tmp/gcp-key.json", serviceAccountKey).
+		WithEnvVariable("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/gcp-key.json").
 		WithExec([]string{"terraform", "init", "-backend=false"})
 
 	output, err := terraform.
