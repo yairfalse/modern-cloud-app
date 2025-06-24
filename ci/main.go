@@ -18,15 +18,22 @@ type ModernblogCi struct{}
 type Infrastructure struct{}
 
 // TerraformPlan runs terraform plan for infrastructure changes
-func (m *ModernblogCi) TerraformPlan(ctx context.Context, source *dagger.Directory) (string, error) {
+func (m *ModernblogCi) TerraformPlan(ctx context.Context, source *dagger.Directory, projectId string, region string, namePrefix string) (string, error) {
+	// Create terraform.tfvars content
+	tfvarsContent := fmt.Sprintf(`project_id = "%s"
+region     = "%s"
+name_prefix = "%s"
+`, projectId, region, namePrefix)
+
 	terraform := dag.Container().
 		From("hashicorp/terraform:latest").
 		WithDirectory("/workspace", source).
 		WithWorkdir("/workspace/terraform").
+		WithNewFile("/workspace/terraform/terraform.tfvars", tfvarsContent).
 		WithExec([]string{"terraform", "init", "-backend=false"})
 
 	output, err := terraform.
-		WithExec([]string{"terraform", "plan", "-out=tfplan"}).
+		WithExec([]string{"terraform", "plan", "-var-file=terraform.tfvars", "-out=tfplan"}).
 		Stdout(ctx)
 	
 	if err != nil {
@@ -91,7 +98,7 @@ type Backend struct{}
 // BuildBackend builds the Go backend application
 func (m *ModernblogCi) BuildBackend(ctx context.Context, source *dagger.Directory) (*dagger.Container, error) {
 	backend := dag.Container().
-		From("golang:1.21-alpine").
+		From("golang:1.24-alpine").
 		WithDirectory("/app", source).
 		WithWorkdir("/app/backend").
 		WithExec([]string{"go", "mod", "download"}).
@@ -109,7 +116,7 @@ func (m *ModernblogCi) BuildBackend(ctx context.Context, source *dagger.Director
 // TestBackend runs backend tests
 func (m *ModernblogCi) TestBackend(ctx context.Context, source *dagger.Directory) (string, error) {
 	testOutput, err := dag.Container().
-		From("golang:1.21-alpine").
+		From("golang:1.24-alpine").
 		WithDirectory("/app", source).
 		WithWorkdir("/app/backend").
 		WithExec([]string{"go", "mod", "download"}).
