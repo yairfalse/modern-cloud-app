@@ -87,12 +87,7 @@ name_prefix = "%s"
 		WithEnvVariable("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/gcp-key.json").
 		WithExec([]string{"terraform", "init"})
 
-	args := []string{"terraform", "apply", "-var-file=terraform.tfvars"}
-	if autoApprove {
-		args = append(args, "-auto-approve")
-	} else {
-		args = append(args, "-input=false")
-	}
+	args := []string{"terraform", "apply", "-var-file=terraform.tfvars", "-auto-approve"}
 
 	output, err := terraform.
 		WithExec(args).
@@ -100,6 +95,34 @@ name_prefix = "%s"
 	
 	if err != nil {
 		return "", fmt.Errorf("terraform apply failed: %w", err)
+	}
+	
+	return output, nil
+}
+
+// TerraformDestroy destroys terraform infrastructure with GCP authentication
+func (m *ModernblogCi) TerraformDestroy(ctx context.Context, source *dagger.Directory, projectId string, region string, namePrefix string, serviceAccountKey string) (string, error) {
+	// Create terraform.tfvars content
+	tfvarsContent := fmt.Sprintf(`project_id = "%s"
+region     = "%s"
+name_prefix = "%s"
+`, projectId, region, namePrefix)
+
+	terraform := dag.Container().
+		From("hashicorp/terraform:latest").
+		WithDirectory("/workspace", source).
+		WithWorkdir("/workspace/terraform").
+		WithNewFile("/workspace/terraform/terraform.tfvars", tfvarsContent).
+		WithNewFile("/tmp/gcp-key.json", serviceAccountKey).
+		WithEnvVariable("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/gcp-key.json").
+		WithExec([]string{"terraform", "init"})
+
+	output, err := terraform.
+		WithExec([]string{"terraform", "destroy", "-var-file=terraform.tfvars", "-auto-approve"}).
+		Stdout(ctx)
+	
+	if err != nil {
+		return "", fmt.Errorf("terraform destroy failed: %w", err)
 	}
 	
 	return output, nil
