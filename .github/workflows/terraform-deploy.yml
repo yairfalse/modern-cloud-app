@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  DAGGER_VERSION: v0.11.0
+  DAGGER_VERSION: v0.18.10
 
 jobs:
   terraform-deploy:
@@ -23,7 +23,7 @@ jobs:
         
       - name: Install Dagger CLI
         run: |
-          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.11.0 sh
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.18.10 sh
           sudo mv bin/dagger /usr/local/bin
           dagger version
         
