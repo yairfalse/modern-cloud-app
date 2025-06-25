@@ -34,7 +34,6 @@ jobs:
           verb: call
           args: -m ci/ terraform-validate --source=..
           version: ${{ env.DAGGER_VERSION }}
-          workdir: .
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           
@@ -45,7 +44,6 @@ jobs:
           verb: call
           args: -m ci/ terraform-plan --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
           version: ${{ env.DAGGER_VERSION }}
-          workdir: .
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           
@@ -57,7 +55,6 @@ jobs:
           verb: call
           args: -m ci/ terraform-apply --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY --auto-approve=true
           version: ${{ env.DAGGER_VERSION }}
-          workdir: .
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           
