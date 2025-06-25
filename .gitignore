@@ -35,3 +35,7 @@ npm-debug.log*
 
 # Claude Code cache (if applicable)
 .claude/
+
+# Service account keys
+*-key.json
+*.serviceaccount.json

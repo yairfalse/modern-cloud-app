@@ -70,15 +70,24 @@ func (m *ModernblogCi) TerraformValidate(ctx context.Context, source *dagger.Dir
 	return fmt.Sprintf("Format Check:\n%s\n\nValidation:\n%s", formatCheck, validateOutput), nil
 }
 
-// TerraformApply applies terraform changes
-func (m *ModernblogCi) TerraformApply(ctx context.Context, source *dagger.Directory, autoApprove bool) (string, error) {
+// TerraformApply applies terraform changes with GCP authentication
+func (m *ModernblogCi) TerraformApply(ctx context.Context, source *dagger.Directory, projectId string, region string, namePrefix string, serviceAccountKey string, autoApprove bool) (string, error) {
+	// Create terraform.tfvars content
+	tfvarsContent := fmt.Sprintf(`project_id = "%s"
+region     = "%s"
+name_prefix = "%s"
+`, projectId, region, namePrefix)
+
 	terraform := dag.Container().
 		From("hashicorp/terraform:latest").
 		WithDirectory("/workspace", source).
 		WithWorkdir("/workspace/terraform").
+		WithNewFile("/workspace/terraform/terraform.tfvars", tfvarsContent).
+		WithNewFile("/tmp/gcp-key.json", serviceAccountKey).
+		WithEnvVariable("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/gcp-key.json").
 		WithExec([]string{"terraform", "init"})
 
-	args := []string{"terraform", "apply"}
+	args := []string{"terraform", "apply", "-var-file=terraform.tfvars"}
 	if autoApprove {
 		args = append(args, "-auto-approve")
 	}
