@@ -21,6 +21,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.11.0 sh
+          sudo mv bin/dagger /usr/local/bin
+          dagger version
+        
       - name: Validate Terraform Configuration
         id: validate
         uses: dagger/dagger-for-github@v6
