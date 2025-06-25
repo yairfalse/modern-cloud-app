@@ -28,7 +28,7 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          args: terraform-validate --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
+          args: -m ci/ terraform-validate --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
           version: ${{ env.DAGGER_VERSION }}
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
@@ -38,7 +38,7 @@ jobs:
         uses: dagger/dagger-for-github@v6
         with:
           verb: call
-          args: terraform-plan --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
+          args: -m ci/ terraform-plan --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
           version: ${{ env.DAGGER_VERSION }}
         env:
           GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
