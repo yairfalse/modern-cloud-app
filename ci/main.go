@@ -90,6 +90,8 @@ name_prefix = "%s"
 	args := []string{"terraform", "apply", "-var-file=terraform.tfvars"}
 	if autoApprove {
 		args = append(args, "-auto-approve")
+	} else {
+		args = append(args, "-input=false")
 	}
 
 	output, err := terraform.
