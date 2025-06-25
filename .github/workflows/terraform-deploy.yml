@@ -1,0 +1,95 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-deploy.yml'
+  workflow_dispatch:
+
+env:
+  DAGGER_VERSION: v0.11.0
+
+jobs:
+  terraform-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Validate Terraform Configuration
+        id: validate
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: terraform-validate --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
+          version: ${{ env.DAGGER_VERSION }}
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Plan Terraform Changes
+        id: plan
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: terraform-plan --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY
+          version: ${{ env.DAGGER_VERSION }}
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Apply Terraform Changes
+        id: apply
+        if: success()
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: terraform-apply --source=.. --project-id=taskmate-461721 --region=europe-west3 --name-prefix=modernblog --service-account-key=env:GCP_SERVICE_ACCOUNT_KEY --auto-approve=true
+          version: ${{ env.DAGGER_VERSION }}
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Create deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Validation | ${{ steps.validate.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Plan | ${{ steps.plan.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Apply | ${{ steps.apply.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Terraform deployment failed on ${new Date().toISOString()}`,
+              body: `## Deployment Failure
+              
+              The Terraform deployment workflow failed during execution.
+              
+              **Workflow Run:** [${context.runId}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              **Commit:** ${context.sha}
+              **Triggered by:** ${context.actor}
+              
+              ### Step Results:
+              - Validation: ${{ steps.validate.outcome }}
+              - Plan: ${{ steps.plan.outcome }}
+              - Apply: ${{ steps.apply.outcome }}
+              
+              Please investigate and resolve the issue.`,
+              labels: ['terraform', 'deployment-failure', 'automated']
+            });
+            console.log(`Created issue #${issue.data.number}`)
