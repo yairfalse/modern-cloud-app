@@ -1,0 +1,115 @@
+name: Terraform PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/terraform-pr.yml'
+
+env:
+  DAGGER_VERSION: v0.18.10
+
+jobs:
+  terraform-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Install Dagger CLI
+        run: |
+          curl -L https://dl.dagger.io/dagger/install.sh | DAGGER_VERSION=0.18.10 sh
+          sudo mv ./bin/dagger /usr/local/bin
+          dagger version
+        
+      - name: Validate Terraform Configuration
+        id: validate
+        uses: dagger/dagger-for-github@v6
+        with:
+          verb: call
+          args: -m ci/ terraform-validate --source=.
+          version: ${{ env.DAGGER_VERSION }}
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Plan Terraform Changes
+        id: plan
+        run: |
+          output=$(dagger call -m ci/ terraform-plan \
+            --source=. \
+            --project-id=taskmate-461721 \
+            --region=europe-west3 \
+            --name-prefix=modernblog \
+            --service-account-key="$GCP_SERVICE_ACCOUNT_KEY")
+          echo "stdout<<EOF" >> $GITHUB_OUTPUT
+          echo "$output" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          
+      - name: Comment PR with Results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `### Terraform Validation Results
+            
+            #### Validation Status: ${{ steps.validate.outcome }}
+            #### Plan Status: ${{ steps.plan.outcome }}
+            
+            <details><summary>Validation Output</summary>
+            
+            \`\`\`
+            ${{ steps.validate.outputs.stdout }}
+            \`\`\`
+            
+            </details>
+            
+            <details><summary>Plan Output</summary>
+            
+            \`\`\`
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+            
+            </details>
+            
+            *Workflow: \`${{ github.workflow }}\`, Action: \`${{ github.event_name }}\`, PR: \`${{ github.event.pull_request.number }}\`*`;
+            
+            // Find existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Terraform Validation Results')
+            });
+            
+            // Update or create comment
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: output
+              });
+            }
+            
+      - name: Fail if validation or plan failed
+        if: steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1
