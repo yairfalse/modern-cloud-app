@@ -74,28 +74,8 @@ jobs:
           
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const issue = await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Terraform deployment failed on ${new Date().toISOString()}`,
-              body: `## Deployment Failure
-              
-              The Terraform deployment workflow failed during execution.
-              
-              **Workflow Run:** [${context.runId}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
-              **Commit:** ${context.sha}
-              **Triggered by:** ${context.actor}
-              
-              ### Step Results:
-              - Validation: ${{ steps.validate.outcome }}
-              - Plan: ${{ steps.plan.outcome }}
-              - Apply: ${{ steps.apply.outcome }}
-              
-              Please investigate and resolve the issue.`,
-              labels: ['terraform', 'deployment-failure', 'automated']
-            });
-            console.log(`Created issue #${issue.data.number}`)
+        run: |
+          echo "::error::Terraform deployment failed!"
+          echo "Validation: ${{ steps.validate.outcome }}"
+          echo "Plan: ${{ steps.plan.outcome }}"
+          echo "Apply: ${{ steps.apply.outcome }}"
