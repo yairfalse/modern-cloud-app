@@ -1,0 +1,31 @@
+apiVersion: skaffold/v4beta6
+kind: Config
+metadata:
+  name: modernblog
+build:
+  artifacts:
+  - image: modernblog-backend
+    context: backend
+    docker:
+      dockerfile: Dockerfile
+    sync:
+      manual:
+      - src: "**/*.go"
+        dest: /app
+manifests:
+  kustomize:
+    paths:
+    - k8s/base
+deploy:
+  kubectl: {}
+portForward:
+- resourceType: service
+  resourceName: backend
+  namespace: default
+  port: 8080
+  localPort: 8080
+- resourceType: service
+  resourceName: postgres
+  namespace: default
+  port: 5432
+  localPort: 5432
