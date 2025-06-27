@@ -1,0 +1,31 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: modernblog-dev
+nodes:
+- role: control-plane
+  extraPortMappings:
+  # Backend API
+  - containerPort: 30080
+    hostPort: 8080
+    protocol: TCP
+  # Frontend
+  - containerPort: 30081
+    hostPort: 3000
+    protocol: TCP
+  # Additional ports for services
+  - containerPort: 30082
+    hostPort: 8081
+    protocol: TCP
+  kubeadmConfigPatches:
+  # Increase pod CIDR for more pods
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  # Enable feature gates
+  - |
+    kind: ClusterConfiguration
+    apiServer:
+      extraArgs:
+        enable-admission-plugins: NodeRestriction,MutatingAdmissionWebhook,ValidatingAdmissionWebhook

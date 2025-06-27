@@ -1,0 +1,41 @@
+# CODEOWNERS file for backend repository
+# This file defines who owns which parts of the codebase and who should review changes
+
+# Global fallback - all files require review from backend team
+* @backend-team
+
+# Core application code
+/cmd/ @backend-team @senior-backend-dev
+/internal/ @backend-team @senior-backend-dev
+
+# API and handlers - critical path requiring extra scrutiny
+/internal/api/ @backend-team @api-team @senior-backend-dev
+
+# Authentication and security-related code
+/pkg/auth/ @backend-team @security-team @senior-backend-dev
+/internal/api/middleware/auth.go @backend-team @security-team @senior-backend-dev
+
+# Database and data models
+/internal/database/ @backend-team @database-team @senior-backend-dev
+
+# Configuration files
+/internal/config/ @backend-team @devops-team @senior-backend-dev
+
+# Infrastructure and deployment
+/.github/ @backend-team @devops-team
+/Makefile @backend-team @devops-team
+/go.mod @backend-team @senior-backend-dev
+/go.sum @backend-team @senior-backend-dev
+
+# Documentation
+/README.md @backend-team @docs-team
+/docs/ @backend-team @docs-team
+
+# CI/CD and quality gates
+/.github/workflows/ @backend-team @devops-team @senior-backend-dev
+/.golangci.yml @backend-team @senior-backend-dev
+/.github/pull_request_template.md @backend-team @senior-backend-dev
+
+# Tests require review from test specialists
+/tests/ @backend-team @qa-team
+/**/*_test.go @backend-team @qa-team

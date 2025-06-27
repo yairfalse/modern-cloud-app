@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: modernblog-backend
+  namespace: modernblog-dev
+  labels:
+    app: modernblog-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: modernblog-backend
+  template:
+    metadata:
+      labels:
+        app: modernblog-backend
+    spec:
+      containers:
+      - name: backend
+        image: modernblog-backend
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        - name: DB_HOST
+          value: "postgres.modernblog-dev.svc.cluster.local"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "modernblog_dev"
+        - name: DB_USER
+          value: "modernblog"
+        - name: DB_PASSWORD
+          value: "dev_password_123"
+        - name: ENV
+          value: "development"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: modernblog-backend
+  namespace: modernblog-dev
+  labels:
+    app: modernblog-backend
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+    protocol: TCP
+  selector:
+    app: modernblog-backend
