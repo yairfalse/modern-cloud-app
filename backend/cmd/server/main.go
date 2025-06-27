@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,54 +11,43 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/yairfalse/modern-cloud-app/backend/internal/api/routes"
+	"github.com/yairfalse/modern-cloud-app/backend/internal/config"
+	"github.com/yairfalse/modern-cloud-app/backend/internal/database"
+	"github.com/yairfalse/modern-cloud-app/backend/pkg/logger"
 )
 
 func main() {
-	// Configure logging with timestamps
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	cfg := config.Load()
+	log := logger.NewLogger(cfg.Environment)
 
-	// Set Gin mode based on environment
-	ginMode := os.Getenv("GIN_MODE")
-	if ginMode == "" {
-		ginMode = gin.DebugMode
-	}
-	gin.SetMode(ginMode)
-
-	// Create gin router
-	var r *gin.Engine
-	if ginMode == gin.ReleaseMode {
-		r = gin.New()
-		r.Use(gin.Logger())
-		r.Use(gin.Recovery())
-	} else {
-		r = gin.Default()
+	db, err := database.Connect(cfg.Database)
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// Configure trusted proxies
-	if ginMode == gin.ReleaseMode {
-		// In production, configure based on your infrastructure
-		// For now, we'll trust no proxies for security
-		if err := r.SetTrustedProxies(nil); err != nil {
-			log.Printf("Warning: Failed to set trusted proxies: %v", err)
-		}
-	} else {
-		// In development, trust localhost
-		if err := r.SetTrustedProxies([]string{"127.0.0.1", "::1"}); err != nil {
-			log.Printf("Warning: Failed to set trusted proxies: %v", err)
-		}
+	if err := database.Migrate(db); err != nil {
+		log.Fatal("Failed to run migrations:", err)
 	}
+
+	gin.SetMode(gin.ReleaseMode)
+	if cfg.Environment == "development" {
+		gin.SetMode(gin.DebugMode)
+	}
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(logger.GinLogger(log))
 
 	// Configure CORS
 	corsConfig := cors.DefaultConfig()
-	if ginMode == gin.ReleaseMode {
-		// In production, be more restrictive
+	if cfg.Environment == "production" {
 		corsConfig.AllowOrigins = []string{os.Getenv("FRONTEND_URL")}
 		if len(corsConfig.AllowOrigins) == 0 || corsConfig.AllowOrigins[0] == "" {
 			corsConfig.AllowOrigins = []string{"http://localhost:5173"}
 		}
 	} else {
-		// In development, allow React dev server
-		corsConfig.AllowOrigins = []string{"http://localhost:5173"}
+		corsConfig.AllowOrigins = []string{"http://localhost:5173", "http://localhost:3000"}
 	}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
@@ -67,38 +55,35 @@ func main() {
 
 	r.Use(cors.New(corsConfig))
 
-	// Register routes
+	// Health check routes
 	r.GET("/", handleRoot)
 	r.GET("/health", handleHealth)
 
-	// Get port from environment
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	// API routes
+	routes.Setup(r, db, cfg)
 
 	// Create server
 	srv := &http.Server{
-		Addr:         ":" + port,
+		Addr:         ":" + cfg.Server.Port,
 		Handler:      r,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  60 * time.Second,
 	}
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("Server starting on port %s (mode: %s)", port, ginMode)
+		log.Info("Server starting on port " + cfg.Server.Port)
 
 		// Listen and serve with better error handling
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			// Check if it's a port conflict
 			if opErr, ok := err.(*net.OpError); ok {
 				if opErr.Op == "listen" {
-					log.Fatalf("Failed to start server - port %s may already be in use: %v", port, err)
+					log.Fatal("Failed to start server - port may already be in use:", err)
 				}
 			}
-			log.Fatalf("Failed to start server: %v", err)
+			log.Fatal("Failed to start server:", err)
 		}
 	}()
 
@@ -107,18 +92,18 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down server...")
+	log.Info("Shutting down server...")
 
 	// Create context with timeout for shutdown
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Server.ShutdownTimeout)
 	defer cancel()
 
 	// Attempt graceful shutdown
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Server forced to shutdown: %v", err)
+		log.Error("Server forced to shutdown:", err)
 	}
 
-	log.Println("Server exited")
+	log.Info("Server exited")
 }
 
 func handleRoot(c *gin.Context) {

@@ -1,0 +1,70 @@
+apiVersion: skaffold/v4beta7
+kind: Config
+metadata:
+  name: modernblog-dev
+
+# Where to find the code
+build:
+  artifacts:
+    # Go backend
+    - image: modernblog-backend
+      context: ../backend
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "**/*.go"
+            dest: /app
+          - src: "go.mod"
+            dest: /app
+          - src: "go.sum"
+            dest: /app
+    
+    # React frontend
+    - image: modernblog-frontend
+      context: ../frontend
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*"
+            dest: /app/src
+          - src: "public/**/*"
+            dest: /app/public
+          - src: "package.json"
+            dest: /app
+          - src: "package-lock.json"
+            dest: /app
+
+# How to deploy to Kubernetes
+deploy:
+  kubectl:
+    manifests:
+      - k8s-dev/*.yaml
+
+# Port forwarding for local access
+portForward:
+  - resourceType: service
+    resourceName: modernblog-frontend
+    namespace: modernblog-dev
+    port: 80
+    localPort: 3000
+  - resourceType: service
+    resourceName: modernblog-backend
+    namespace: modernblog-dev
+    port: 8080
+    localPort: 8080
+
+# Development profiles
+profiles:
+  - name: dev
+    activation:
+      - command: dev
+    build:
+      tagPolicy:
+        gitCommit: {}
+      local:
+        push: false
+    deploy:
+      kubectl:
+        defaultNamespace: modernblog-dev
