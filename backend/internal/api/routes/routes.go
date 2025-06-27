@@ -53,8 +53,11 @@ func setupPostRoutes(api *gin.RouterGroup, handler *handlers.PostHandler, authMw
 }
 
 func setupCommentRoutes(api *gin.RouterGroup, handler *handlers.CommentHandler, authMw *middleware.AuthMiddleware) {
-	api.GET("/posts/:post_id/comments", handler.GetComments)
-	api.POST("/posts/:post_id/comments", authMw.RequireAuth(), handler.CreateComment)
-	api.PUT("/comments/:id", authMw.RequireAuth(), handler.UpdateComment)
-	api.DELETE("/comments/:id", authMw.RequireAuth(), handler.DeleteComment)
+	comments := api.Group("/comments")
+	{
+		comments.GET("", handler.GetComments) // Use query param ?post_id=
+		comments.POST("", authMw.RequireAuth(), handler.CreateComment)
+		comments.PUT("/:id", authMw.RequireAuth(), handler.UpdateComment)
+		comments.DELETE("/:id", authMw.RequireAuth(), handler.DeleteComment)
+	}
 }

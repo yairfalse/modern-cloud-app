@@ -15,6 +15,10 @@ spec:
       labels:
         app: modernblog-backend
     spec:
+      initContainers:
+      - name: wait-for-postgres
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z postgres.modernblog-dev.svc.cluster.local 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
       - name: backend
         image: modernblog-backend

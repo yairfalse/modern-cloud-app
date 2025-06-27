@@ -5,12 +5,16 @@ metadata:
 
 # Where to find the code
 build:
+  local:
+    useBuildkit: false
   artifacts:
     # Go backend
     - image: modernblog-backend
       context: ../backend
       docker:
         dockerfile: Dockerfile
+        buildArgs:
+          DOCKER_BUILDKIT: "0"
       sync:
         manual:
           - src: "**/*.go"
@@ -25,6 +29,8 @@ build:
       context: ../frontend
       docker:
         dockerfile: Dockerfile
+        buildArgs:
+          DOCKER_BUILDKIT: "0"
       sync:
         manual:
           - src: "src/**/*"
@@ -37,10 +43,12 @@ build:
             dest: /app
 
 # How to deploy to Kubernetes
+manifests:
+  rawYaml:
+    - k8s-dev/*.yaml
+
 deploy:
-  kubectl:
-    manifests:
-      - k8s-dev/*.yaml
+  kubectl: {}
 
 # Port forwarding for local access
 portForward:
@@ -65,6 +73,9 @@ profiles:
         gitCommit: {}
       local:
         push: false
+    manifests:
+      rawYaml:
+        - k8s-dev/*.yaml
     deploy:
       kubectl:
         defaultNamespace: modernblog-dev

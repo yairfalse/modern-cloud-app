@@ -1,4 +1,4 @@
-import { BlogPost, User } from './index'
+import type { BlogPost } from './index'
 
 // API endpoint response types
 export interface GetPostsResponse {
@@ -32,7 +32,7 @@ export interface CreatePostPayload {
   author: string
 }
 
-export interface UpdatePostPayload extends CreatePostPayload {}
+export type UpdatePostPayload = CreatePostPayload
 
 // Generic API error response
 export interface ApiError {
