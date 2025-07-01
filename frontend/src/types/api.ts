@@ -23,6 +23,14 @@ export interface DeletePostResponse {
 
 export interface HealthCheckResponse {
   status: 'healthy' | 'unhealthy'
+  timestamp: string
+}
+
+export interface RootResponse {
+  message: string
+  version: string
+  mode: string
+  time: string
 }
 
 // Request payload types
