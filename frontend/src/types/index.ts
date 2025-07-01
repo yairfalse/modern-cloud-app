@@ -3,23 +3,23 @@
  */
 export interface BlogPost {
   /** Unique identifier for the blog post */
-  id: string;
+  id: string
   /** Title of the blog post */
-  title: string;
+  title: string
   /** Full content of the blog post */
-  content: string;
+  content: string
   /** First 150 characters of the content for preview */
-  excerpt: string;
+  excerpt: string
   /** Name of the post author */
-  authorName: string;
+  authorName: string
   /** Unique identifier of the author */
-  authorId: string;
+  authorId: string
   /** ISO date string when the post was created */
-  createdAt: string;
+  createdAt: string
   /** ISO date string when the post was last updated */
-  updatedAt: string;
+  updatedAt: string
   /** Whether the post is published or draft */
-  published: boolean;
+  published: boolean
 }
 
 /**
@@ -27,13 +27,13 @@ export interface BlogPost {
  */
 export interface User {
   /** Unique identifier for the user */
-  id: string;
+  id: string
   /** User's display name */
-  name: string;
+  name: string
   /** User's email address */
-  email: string;
+  email: string
   /** ISO date string when the user was created */
-  createdAt: string;
+  createdAt: string
 }
 
 /**
@@ -41,17 +41,17 @@ export interface User {
  */
 export interface Comment {
   /** Unique identifier for the comment */
-  id: string;
+  id: string
   /** ID of the blog post this comment belongs to */
-  postId: string;
+  postId: string
   /** ID of the user who made the comment */
-  userId: string;
+  userId: string
   /** Name of the comment author */
-  authorName: string;
+  authorName: string
   /** Content of the comment */
-  content: string;
+  content: string
   /** ISO date string when the comment was created */
-  createdAt: string;
+  createdAt: string
 }
 
 /**
@@ -60,9 +60,9 @@ export interface Comment {
  */
 export interface ApiResponse<T> {
   /** The response data */
-  data: T;
+  data: T
   /** Optional success message */
-  message?: string;
+  message?: string
   /** Optional error message */
-  error?: string;
+  error?: string
 }
