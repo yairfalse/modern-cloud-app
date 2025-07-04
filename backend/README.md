@@ -5,6 +5,7 @@ A clean, professional Go backend for the ModernBlog application.
 ## Requirements
 
 - Go 1.21 or higher
+- PostgreSQL 15 or higher (for local development)
 - Make (optional, for using Makefile commands)
 
 ## Project Structure
@@ -26,12 +27,17 @@ backend/
 
 ## Quick Start
 
-1. **Install dependencies:**
+1. **Setup PostgreSQL locally:**
+   ```bash
+   ../scripts/setup-postgres.sh
+   ```
+
+2. **Install dependencies:**
    ```bash
    make deps
    ```
 
-2. **Run the application:**
+3. **Run the application:**
    ```bash
    make run
    ```

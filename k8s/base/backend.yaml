@@ -3,7 +3,7 @@ kind: ConfigMap
 metadata:
   name: backend-config
 data:
-  DB_HOST: postgres
+  DB_HOST: host.docker.internal
   DB_PORT: "5432"
   DB_NAME: modernblog
   DB_USER: postgres

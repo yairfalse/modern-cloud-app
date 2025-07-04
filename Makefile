@@ -10,6 +10,8 @@ install-tools:
 
 # Start local development environment
 dev-up: install-tools
+	@echo "Setting up PostgreSQL..."
+	@./scripts/setup-postgres.sh
 	@echo "Starting Kind cluster..."
 	@kind get clusters | grep -q modernblog-local || kind create cluster --name modernblog-local --config kind-config.yaml
 	@echo "Installing NGINX Ingress Controller..."

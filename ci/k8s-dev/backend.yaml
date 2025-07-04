@@ -15,21 +15,6 @@ spec:
       labels:
         app: modernblog-backend
     spec:
-      initContainers:
-      - name: wait-for-postgres
-        image: busybox:1.35
-        command: 
-          - sh
-          - -c
-          - |
-            echo "Waiting for PostgreSQL to be ready..."
-            until nc -z postgres.modernblog-dev.svc.cluster.local 5432; do
-              echo "PostgreSQL not ready yet, waiting 3 seconds..."
-              sleep 3
-            done
-            echo "PostgreSQL is ready! Waiting additional 5 seconds for full startup..."
-            sleep 5
-            echo "Init container complete."
       containers:
       - name: backend
         image: modernblog-backend
@@ -39,7 +24,7 @@ spec:
         - name: PORT
           value: "8080"
         - name: DB_HOST
-          value: "postgres.modernblog-dev.svc.cluster.local"
+          value: "host.docker.internal"
         - name: DB_PORT
           value: "5432"
         - name: DB_NAME
