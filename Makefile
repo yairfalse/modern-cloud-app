@@ -19,7 +19,7 @@ dev-up: install-tools
 	@echo "Waiting for ingress controller to be ready..."
 	@kubectl wait --namespace ingress-nginx \
 		--for=condition=ready pod \
-		--selector=app.kubernetes.io/component=controller \
+		--selector=app.kubernetes.io/component=controller,app.kubernetes.io/instance=ingress-nginx \
 		--timeout=90s
 	@echo "Starting Skaffold..."
 	@skaffold dev --port-forward

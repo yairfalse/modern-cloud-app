@@ -10,15 +10,38 @@ if ! command -v psql &> /dev/null; then
     brew services start postgresql@15
 else
     echo "PostgreSQL is already installed."
+    # Check if PostgreSQL service is running
+    # First check if postgresql@15 formula exists
+    if brew list --formula | grep -q "postgresql@15"; then
+        if ! brew services list | grep postgresql@15 | grep -q started; then
+            echo "PostgreSQL@15 is installed but not running. Starting it..."
+            brew services start postgresql@15
+        fi
+    else
+        # Maybe user has a different version of PostgreSQL
+        if brew list --formula | grep -q "^postgresql$"; then
+            if ! brew services list | grep "^postgresql" | grep -q started; then
+                echo "PostgreSQL is installed but not running. Starting it..."
+                brew services start postgresql
+            fi
+        fi
+    fi
 fi
 
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to start..."
-sleep 3
+for i in {1..10}; do
+    if pg_isready -q; then
+        echo "PostgreSQL is ready!"
+        break
+    fi
+    echo "Waiting for PostgreSQL... ($i/10)"
+    sleep 2
+done
 
 # Create database and user
 echo "Creating database and user..."
-psql postgres <<EOF
+psql postgres <<EOF || true
 -- Create user if not exists
 DO \$\$
 BEGIN
@@ -28,8 +51,9 @@ BEGIN
 END
 \$\$;
 
--- Create database if not exists
-CREATE DATABASE modernblog_dev OWNER modernblog;
+-- Create database if not exists  
+SELECT 'CREATE DATABASE modernblog_dev OWNER modernblog' 
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'modernblog_dev')\gexec
 
 -- Grant all privileges
 GRANT ALL PRIVILEGES ON DATABASE modernblog_dev TO modernblog;

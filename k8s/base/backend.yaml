@@ -5,8 +5,8 @@ metadata:
 data:
   DB_HOST: host.docker.internal
   DB_PORT: "5432"
-  DB_NAME: modernblog
-  DB_USER: postgres
+  DB_NAME: modernblog_dev
+  DB_USER: modernblog
   DB_SSLMODE: disable
   PORT: "8080"
 ---
@@ -16,7 +16,7 @@ metadata:
   name: backend-secret
 type: Opaque
 stringData:
-  DB_PASSWORD: postgres123
+  DB_PASSWORD: dev_password_123
   JWT_SECRET: local-dev-secret-key-change-in-production
 ---
 apiVersion: apps/v1

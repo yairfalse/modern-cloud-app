@@ -24,8 +24,3 @@ portForward:
   namespace: default
   port: 8080
   localPort: 8080
-- resourceType: service
-  resourceName: postgres
-  namespace: default
-  port: 5432
-  localPort: 5432
